@@ -1,7 +1,14 @@
 #ifndef GENETICALGORITHM_CHROMOSOME_H
 #define GENETICALGORITHM_CHROMOSOME_H
 
+#include"/media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/mechanicalArmOp/inc/DH_MechanicalArm.h"
+#include<math.h>
+
 namespace GeneticAlgorithm {
+
+const double PI = 3.1415926;
+#define RADIAN(a) (PI/180*a) 
+const int JOINTN = 5;
 
     /* 染色体
      */
@@ -91,6 +98,8 @@ namespace GeneticAlgorithm {
         /** @var long double 缓存的上一次的适应度计算结果。需要判断isFitnessCached以确定确实缓存下来了。 */
         long double fitnessCached;
 
+		DH_MechanicalArm<5, 5>* arm;
+		TransferMatrix target;
     };
 
 }

@@ -5,13 +5,31 @@
 
 namespace GeneticAlgorithm {
 
-    Chromosome::Chromosome(unsigned long lengthOfChromosome) {
+    Chromosome::Chromosome(unsigned long lengthOfChromosome) 
+	{
         this->dataArray = new long double[lengthOfChromosome];
         this->lengthOfData = lengthOfChromosome;
+
+		Matrix<float, JOINTN, 4> dh;
+		dh << -PI/2,   0,   2,   0,
+		  		PI/2,   0,  0, PI/2,
+		    	0,     10,   0,  0,
+		    	0,     20,  0,   0,
+		    	0,     30,   0,  0;
+		
+		TransferMatrix wf;
+
+		arm = new DH_MechanicalArm<5, 5>(dh, wf);
+
+		VectorXf runParams(5, 1);
+		runParams << RADIAN(90),RADIAN(90),RADIAN(0),RADIAN(0),RADIAN(0);
+		target = this->arm->forward(runParams);
     }
 
-    Chromosome::~Chromosome() {
+    Chromosome::~Chromosome() 
+	{
         delete[] this->dataArray;
+		delete arm;
     }
 
     bool Chromosome::setGene(unsigned long offset, long double value) {
@@ -32,27 +50,65 @@ namespace GeneticAlgorithm {
         return this->dataArray[offset];
     }
 
-    void Chromosome::dump() {
-        std::cout << "Fitness=" << this->getFitness() << ",v1=" << this->dataArray[0] << ",v2=" << this->dataArray[1] << std::endl;
-    }
+    void Chromosome::dump() 
+	{
+        cout << "Fitness=" << this->getFitness() << " ";
+		for(unsigned long i = 0; i < this->lengthOfData; i++)
+		{
+			cout << this->dataArray[i] << " ";
+		}
+		cout << endl;
+		cout << this->arm->forward() << endl;
+		cout << "accuracy:" << sqrt((this->arm->forward() - target).squaredNorm()) << endl;
+	}
 
     unsigned long Chromosome::getLength() {
         return this->lengthOfData;
     }
 
-    long double Chromosome::getFitness() {
-        if (this->isFitnessCached) {
+    long double Chromosome::getFitness() 
+	{
+		if (this->isFitnessCached) 
+		{
             return this->fitnessCached;
         }
-        if (this->lengthOfData < 2) {
+		
+        if (this->lengthOfData < 2) 
+		{
             throw "Can not less then 2.";
         }
-        long double v1, v2, y;
-        v1 = this->dataArray[0];
-        v2 = this->dataArray[1];
-        y = 100.0 * (v1 * v1 - v2) * (v1 * v1 - v2) + (1.0 - v1) * (1.0 - v1);
+
+		VectorXf runParams(5, 1);
+		
+		for(int i=0; i<5; i++)
+		{
+			runParams(i) = RADIAN(this->dataArray[i]);	
+		}
+
+		TransferMatrix ret;
+		
+		ret = this->arm->forward(runParams);
+		
+		ret = ret - this->target;
+		for(int i=0; i<3; i++)
+		{
+			for(int j=0; j<3; j++)
+			{
+				ret(i, j) = ret(i, j) * 9;
+			}
+		}
+		// cout <<  endl;
+		// cout << runParams << endl;
+		// cout << ret << endl;
+		// cout << this->target << endl;
+		
+		this->fitnessCached = sqrt(ret.squaredNorm());
+		// cout << this->fitnessCached << endl;
+		// cout << endl;
+		//cout << y << endl;
         // y 最小等于0，我们求最大适应度需要反过来
-        this->fitnessCached = 1.0 / (y + 0.01);
+        this->fitnessCached = 1.0 / (this->fitnessCached + 0.01);
+	
         return this->fitnessCached;
     }
 

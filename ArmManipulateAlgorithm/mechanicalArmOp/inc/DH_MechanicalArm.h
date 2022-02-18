@@ -20,8 +20,7 @@ protected:
 
 		// this->RunParams(DriverJointN) = this->RunParams(DriverJointN-1);
 		// this->RunParams(DriverJointN-1) = 0;
-
-		DHTable.col(3) += this->RunParams;
+		DHTable.col(3) += this->RunParams;		
 	}
 
 	TransferMatrix i2i_1TransferMatrix(int i, bool& success)
@@ -44,7 +43,7 @@ protected:
 			ret(2, 1) = cos(DHTable(i, 3)) * sin(DHTable(i, 0));
 			ret(2, 2) = cos(DHTable(i, 0));
 			ret(2, 3) = cos(DHTable(i, 0)) * DHTable(i, 2);
-
+			
 			success = true;
 		}
 
@@ -72,16 +71,21 @@ public:
 		
 		this->RunParams = runParams;
 		loadRunParams();
-		std::cout << "dh:" << std::endl  << DHTable << std::endl;
-		std::cout << "0->w" << std::endl  << ret << std::endl;
+		 //std::cout << "dh:" << std::endl  << DHTable << std::endl;
+		// std::cout << "0->w" << std::endl  << ret << std::endl;
 		for(int i = 1; i <=JointN && s; i++)
 		{
 			temp = i2i_1TransferMatrix(i, s);
-			std::cout << i << "->" << i-1 << std::endl << temp << std::endl; 
+		//	std::cout << i << "->" << i-1 << std::endl << temp << std::endl; 
 			ret *= temp;
 		}
-
+		DHTable.col(3) -= this->RunParams;
 		return ret;
+	}
+
+	TransferMatrix forward()
+	{
+		return forward(this->RunParams);
 	}
 
 	VectorXf backward(TransferMatrix& dst, bool update=false)

@@ -27,8 +27,12 @@ int main()
 	runParams << RADIAN(90),RADIAN(90),RADIAN(0),RADIAN(0),RADIAN(0);
 
 	TransferMatrix ret = arm.forward(runParams);
-
 	cout << JOINTN << "->" << "w" << endl << ret << endl;
+	TransferMatrix ret1 = arm.forward(runParams);
 
+	cout << JOINTN << "->" << "w" << endl << ret1 << endl;
+	ret = arm.forward();
+
+	cout << JOINTN << "->" << "w" << endl << ret << endl;	
 	return 0;
 }

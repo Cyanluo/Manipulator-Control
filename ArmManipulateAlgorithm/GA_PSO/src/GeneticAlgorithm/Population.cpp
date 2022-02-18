@@ -49,11 +49,13 @@ namespace GeneticAlgorithm {
         return true;
     }
 
-    bool Population::replaceChromosome(unsigned long offset, Chromosome *chromosome) {
+    bool Population::replaceChromosome(unsigned long offset, Chromosome *chromosome) 
+	{
         return this->setChromosome(offset, chromosome);
     }
 
-    Chromosome* Population::getChromosome(unsigned long offset) {
+    Chromosome* Population::getChromosome(unsigned long offset)
+	{
         if (offset >= this->numberOfChromosome) {
             throw "Error, offset out of range, in \"Population::getChromosome\".";
         }
@@ -63,18 +65,51 @@ namespace GeneticAlgorithm {
         return this->chromosomeArray[offset];
     }
 
-    unsigned long Population::getSize() {
+    unsigned long Population::getSize() 
+	{
         return this->numberOfChromosome;
     }
 
     void Population::sort() {
-        std::sort(
+		//cout << "number" << this->numberOfChromosome << endl;
+		// cout << endl;
+		// for(int i=0; i< this->numberOfChromosome; i++)
+		// {
+		// 	cout << i << ":" << this->chromosomeArray[i] << endl;
+		// }
+		// cout << endl;
+		// for(int i=0; i < this->numberOfChromosome; i++)
+		// {
+		// 	cout << i << ":" << this->chromosomeArray[i]->getFitness() << endl;
+		// }
+		// cout << endl;
+		// for(int i=0; i < this->numberOfChromosome; i++)
+		// {
+		// 	cout << i << ":" << this->chromosomeArray[i]->getFitness() << endl;
+		// }
+		// cout << endl;
+        
+		std::sort(
             &(this->chromosomeArray[0]),
             &(this->chromosomeArray[this->numberOfChromosome]),
             [](Chromosome* a, Chromosome* b) -> bool {
+		//		cout << "a:" << a << " " << "b:" << b << endl;
+				if(b < (Chromosome*)0x10000 || a < (Chromosome*)0x10000)
+					return false;
                 return a->getFitness() > b->getFitness();
             }
         );
+		// cout << endl;
+		// for(int i=0; i< this->numberOfChromosome; i++)
+		// {
+		// 	cout << i << ":" << this->chromosomeArray[i] << endl;
+		// }
+		// cout << endl;
+		// for(int i=0; i < this->numberOfChromosome; i++)
+		// {
+		// 	cout << i << ":" << this->chromosomeArray[i]->getFitness() << endl;
+		// }
+		// cout << endl;
         this->isMaxFitnessChromosomeCache = true;
         this->maxFitnessChromosomeCache = this->chromosomeArray[0];
         this->maxFitnessChromosomeOffset = 0;
@@ -92,7 +127,7 @@ namespace GeneticAlgorithm {
                 offset = i;
                 maxFitness = this->chromosomeArray[i]->getFitness();
             }
-        }
+		}
         this->isMaxFitnessChromosomeCache = true;
         this->maxFitnessChromosomeCache = this->chromosomeArray[offset];
         this->maxFitnessChromosomeOffset = offset;

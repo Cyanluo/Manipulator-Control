@@ -12,6 +12,7 @@ class JMechArm
 protected:
 	VectorXf RunParams;
 	TransferMatrix* worldCoordinates;
+	int m_runParamsLength;
 
 	virtual void loadRunParams() = 0;
 public:
@@ -20,15 +21,24 @@ public:
 		RunParams.setZero(DriverJointN, 1);
 
 		worldCoordinates = new TransferMatrix(wf);
+
+		m_runParamsLength = DriverJointN;
 	}
 
 	virtual TransferMatrix forward(VectorXf runParams) = 0;
 
+	virtual TransferMatrix forward() = 0;
+	
 	virtual VectorXf backward(TransferMatrix& dst, bool update=false) = 0;
 
-	VectorXf getRunParams() const
+	VectorXf runParams() const
 	{
 		return RunParams;
+	}
+
+	int runParamsLength() const
+	{
+		return m_runParamsLength;
 	}
 
 	virtual ~JMechArm()

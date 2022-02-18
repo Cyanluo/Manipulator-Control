@@ -6,23 +6,25 @@
  */
 #include <iostream>
 #include "GeneticAlgorithm/MainProcess.h"
+#include <iomanip>
 
 using namespace GeneticAlgorithm;
 using namespace std;
 
 int main()
 {
+	cout  << fixed << setprecision(2);
     MainProcess mainProcess = MainProcess();
     mainProcess.setDebug(true);
     mainProcess.run(
-        240, // 种群大小
-        2, // 染色体长度
-        -2.048, // 初始范围
-        2.048, // 初始范围
-        300, // 最大迭代次数
-        99.0, // 停止迭代适应度
-        20, // 每次迭代保留多少个上一代的高适应度个体
-        0.015 // 变异概率，随便变动范围系数
+        120, // 种群大小
+        5, // 染色体长度
+        -180, // 初始范围
+        180, // 初始范围
+        100, // 最大迭代次数
+        6, // 停止迭代适应度
+        25, // 每次迭代保留多少个上一代的高适应度个体
+        0.8 // 变异概率，随便变动范围系数
     );
     return 0;
 }
