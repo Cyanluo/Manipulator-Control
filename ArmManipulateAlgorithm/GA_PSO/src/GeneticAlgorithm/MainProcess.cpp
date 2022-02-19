@@ -200,7 +200,8 @@ namespace GeneticAlgorithm {
         }
     }
 
-    void MainProcess::freeMemory() {
+    void MainProcess::freeMemory() 
+	{
         if (nullptr != this->population) {
             delete this->population;
             this->population = nullptr;

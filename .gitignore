@@ -1576,3 +1576,5 @@ ArmManipulateAlgorithm/cpp-genetic-algorithm/src/GeneticAlgorithm/Utils/GlobalCp
 ArmManipulateAlgorithm/cpp-genetic-algorithm/src/GeneticAlgorithm/Utils/GlobalCppRandomEngine.h
 ArmManipulateAlgorithm/cpp-genetic-algorithm/build/.gitkeep
 ArmManipulateAlgorithm/cpp-genetic-algorithm/build/.gitkeep
+
+.vscode/c_cpp_properties.json

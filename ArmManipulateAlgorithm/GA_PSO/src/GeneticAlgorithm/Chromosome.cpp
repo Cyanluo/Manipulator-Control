@@ -22,7 +22,7 @@ namespace GeneticAlgorithm {
 		arm = new DH_MechanicalArm<5, 5>(dh, wf);
 
 		VectorXf runParams(5, 1);
-		runParams << RADIAN(90),RADIAN(90),RADIAN(0),RADIAN(0),RADIAN(0);
+		runParams << RADIAN(40),RADIAN(50),RADIAN(0),RADIAN(90),RADIAN(0);
 		target = this->arm->forward(runParams);
     }
 
@@ -108,7 +108,9 @@ namespace GeneticAlgorithm {
 		//cout << y << endl;
         // y 最小等于0，我们求最大适应度需要反过来
         this->fitnessCached = 1.0 / (this->fitnessCached + 0.01);
-	
+
+		this->isFitnessCached = true;
+
         return this->fitnessCached;
     }
 
@@ -134,5 +136,7 @@ namespace GeneticAlgorithm {
         for (unsigned long i = 0; i < this->lengthOfData; i++) {
             this->dataArray[i] += distribution(GlobalCppRandomEngine::engine);
         }
+
+		this->isFitnessCached = false;
     }
 }
