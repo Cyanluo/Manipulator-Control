@@ -4,6 +4,7 @@
 #include "Chromosome.h"
 #include <random>
 #include <iostream>
+#include <vector>
 
 namespace GeneticAlgorithm {
 
@@ -32,7 +33,7 @@ namespace GeneticAlgorithm {
          * @param unsigned double max 随机实数的最大值
          * @return Chromosome*
          */
-        Chromosome* buildRandomChromosome(unsigned long lengthOfData, long double min, long double max);
+        Chromosome* buildRandomChromosome(unsigned long lengthOfData, MatrixXd& limit);
 
         /**
          * 创建空的染色体，其中实数都初始化为 0

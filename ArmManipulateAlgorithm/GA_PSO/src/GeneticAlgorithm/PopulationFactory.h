@@ -7,7 +7,8 @@ namespace GeneticAlgorithm {
 
     /* 工厂类，生成种群
      */
-    class PopulationFactory {
+class PopulationFactory 
+{
 
     public:
 
@@ -19,7 +20,7 @@ namespace GeneticAlgorithm {
          * @param long double max 随机范围最大值
          * @return Population*
          */
-        Population* buildRandomPopulation(unsigned long numberOfChromosome, unsigned long lengthOfChromosome, long double min, long double max);
+        Population* buildRandomPopulation(unsigned long numberOfChromosome, unsigned long lengthOfChromosome, MatrixXd& limit);
 
     };
 

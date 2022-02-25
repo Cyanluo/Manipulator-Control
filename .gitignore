@@ -1578,3 +1578,8 @@ ArmManipulateAlgorithm/cpp-genetic-algorithm/build/.gitkeep
 ArmManipulateAlgorithm/cpp-genetic-algorithm/build/.gitkeep
 
 .vscode/c_cpp_properties.json
+ArmManipulateAlgorithm/GA_PSO/src/GA_Extend/Chromosome.h
+ArmManipulateAlgorithm/GA_PSO/src/GA_Extend/Nature.h
+ArmManipulateAlgorithm/GA_PSO/src/GA_Extend/Population.h
+ArmManipulateAlgorithm/GA_PSO/src/GA_Extend/RNature.h
+.gitignore

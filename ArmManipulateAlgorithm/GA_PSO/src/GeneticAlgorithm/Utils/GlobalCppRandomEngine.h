@@ -3,6 +3,7 @@
 
 #include <random>
 
+#include<time.h>
 namespace GeneticAlgorithm::Utils {
 
     /* 提供使用的随机数工具类

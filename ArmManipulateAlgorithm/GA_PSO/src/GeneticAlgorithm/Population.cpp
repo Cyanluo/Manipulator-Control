@@ -38,7 +38,7 @@ namespace GeneticAlgorithm {
             if ((void*)(this->maxFitnessChromosomeCache) == (void*)chromosome) {
                 return false;
             }
-            if (this->maxFitnessChromosomeCache->getFitness() > chromosome->getFitness()) {
+            if (this->maxFitnessChromosomeCache->getFitness(target) > chromosome->getFitness(target)) {
                 this->isMaxFitnessChromosomeCache = false;
             } else {
                 this->maxFitnessChromosomeCache = chromosome;
@@ -92,11 +92,11 @@ namespace GeneticAlgorithm {
 		std::sort(
             &(this->chromosomeArray[0]),
             &(this->chromosomeArray[this->numberOfChromosome]),
-            [](Chromosome* a, Chromosome* b) -> bool {
+            [this](Chromosome* a, Chromosome* b) -> bool {
 		//		cout << "a:" << a << " " << "b:" << b << endl;
 				if(b < (Chromosome*)0x10000 || a < (Chromosome*)0x10000)
 					return false;
-                return a->getFitness() > b->getFitness();
+                return a->getFitness(target) > b->getFitness(target);
             }
         );
 		// cout << endl;
@@ -115,7 +115,8 @@ namespace GeneticAlgorithm {
         this->maxFitnessChromosomeOffset = 0;
     }
 
-    Chromosome* Population::getMaxFitnessChromosome() {
+    Chromosome* Population::getMaxFitnessChromosome() 
+	{
         if (this->isMaxFitnessChromosomeCache) {
             return this->maxFitnessChromosomeCache;
         }
@@ -123,9 +124,9 @@ namespace GeneticAlgorithm {
         unsigned long offset = 0;
         this->maxFitnessChromosomeCache = this->chromosomeArray[offset];
         for (unsigned long i = 0; i < this->numberOfChromosome; i++) {
-            if (this->chromosomeArray[i]->getFitness() > maxFitness) {
+            if (this->chromosomeArray[i]->getFitness(target) > maxFitness) {
                 offset = i;
-                maxFitness = this->chromosomeArray[i]->getFitness();
+                maxFitness = this->chromosomeArray[i]->getFitness(target);
             }
 		}
         this->isMaxFitnessChromosomeCache = true;
@@ -133,5 +134,10 @@ namespace GeneticAlgorithm {
         this->maxFitnessChromosomeOffset = offset;
         return this->chromosomeArray[offset];
     }
+
+	void Population::setTarget(TransferMatrix& target)
+	{
+		this->target = target;
+	}
 
 }

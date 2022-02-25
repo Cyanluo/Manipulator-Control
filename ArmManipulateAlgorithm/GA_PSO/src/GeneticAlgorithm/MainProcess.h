@@ -21,19 +21,20 @@ namespace GeneticAlgorithm {
         void run(
             unsigned long numberOfChromosome, // 种群中个体数量
             unsigned long lengthOfChromosome, // 每个个体的基因长度
-            long double min, // 一开始初始种群时，随机数范围最小值
-            long double max, // 一开始初始种群时，随机数范围最大值
+            MatrixXd& limit,
             unsigned long maxLoop, // 最大迭代次数
             long double stopFitness, // 达到多大的适应度就立刻停止迭代
             unsigned long keep, // 每次迭代保留多少个上一代的个体
-            long double r // 基因突变的概率
+            long double r, // 基因突变的概率
+			TransferMatrix& target
         );
         // 继续运行
         void runContinue(
             unsigned long maxLoop, // 这一次的最大迭代次数
             long double stopFitness, // 达到多大的适应度就立刻停止迭代
             unsigned long keep, // 每次迭代保留多少个上一代的个体
-            long double r // 基因突变的概率
+            long double r, // 基因突变的概率
+			TransferMatrix& target
         );
         // 设置debug模式，为true的时候打印调试信息
         void setDebug(bool enableDebug);
@@ -50,10 +51,8 @@ namespace GeneticAlgorithm {
         unsigned long numberOfChromosome;
         // 染色体的长度
         unsigned long lengthOfChromosome;
-        // 随机初始范围
-        long double min;
-        // 随机初始范围
-        long double max;
+
+		MatrixXd limit;
         // 每次迭代从上一代保留多少个个体
         unsigned long keep;
         // 每次迭代上上一道销毁多少个个体，这个根据numberOfChromosome和lengthOfChromosome算出来的
@@ -72,6 +71,7 @@ namespace GeneticAlgorithm {
         Population* population = nullptr;
         // 是否开启调试
         bool debug = false;
+		TransferMatrix target;
         // 私有，初始化
         void init();
         // 私有，对种群中个体按照适应度大小排序

@@ -1,7 +1,7 @@
 #ifndef GENETICALGORITHM_CHROMOSOME_H
 #define GENETICALGORITHM_CHROMOSOME_H
 
-#include"/media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/mechanicalArmOp/inc/DH_MechanicalArm.h"
+#include"DH_MechanicalArm.h"
 #include<math.h>
 
 namespace GeneticAlgorithm {
@@ -66,7 +66,7 @@ const int JOINTN = 5;
          *
          * @return long double
          */
-        long double getFitness();
+        long double getFitness(TransferMatrix& target);
 
         /**
          * 与另一个染色体交叉，返回新的染色体
@@ -74,7 +74,7 @@ const int JOINTN = 5;
          * @param Chromosome* another 另一个染色体对象
          * @return Chromosome* 新的染色体对象，需要手动释放内存
          */
-        Chromosome* crossover(Chromosome* another);
+        Chromosome* crossover(Chromosome* another, MatrixXd& limit);
 
         /**
          * 以一定的概率r变异
@@ -82,9 +82,10 @@ const int JOINTN = 5;
          * @param long double r
          * @return void
          */
-        void mutation(long double r);
+        void mutation(long double r, MatrixXd& limit);
 
     private:
+		void limiting(long double*& data, MatrixXd& limit);
 
         /** @var unsigned long 保存了此染色体的长度 */
         unsigned long lengthOfData;
@@ -98,7 +99,7 @@ const int JOINTN = 5;
         /** @var long double 缓存的上一次的适应度计算结果。需要判断isFitnessCached以确定确实缓存下来了。 */
         long double fitnessCached;
 
-		DH_MechanicalArm<5, 5>* arm;
+		JMechArm<5, 5>* arm;
 		TransferMatrix target;
     };
 

@@ -20,10 +20,6 @@ namespace GeneticAlgorithm {
 		TransferMatrix wf;
 
 		arm = new DH_MechanicalArm<5, 5>(dh, wf);
-
-		VectorXf runParams(5, 1);
-		runParams << RADIAN(40),RADIAN(50),RADIAN(0),RADIAN(90),RADIAN(0);
-		target = this->arm->forward(runParams);
     }
 
     Chromosome::~Chromosome() 
@@ -32,7 +28,8 @@ namespace GeneticAlgorithm {
 		delete arm;
     }
 
-    bool Chromosome::setGene(unsigned long offset, long double value) {
+    bool Chromosome::setGene(unsigned long offset, long double value) 
+	{
         if (offset > this->lengthOfData - 1) {
             return false;
         }
@@ -43,30 +40,34 @@ namespace GeneticAlgorithm {
         return true;
     }
 
-    long double Chromosome::getGene(unsigned long offset) {
-        if (offset > this->lengthOfData - 1) {
+    long double Chromosome::getGene(unsigned long offset) 
+	{
+        if (offset > this->lengthOfData - 1) 
+		{
             throw "Error, out of range.";
         }
+
         return this->dataArray[offset];
     }
 
     void Chromosome::dump() 
 	{
-        cout << "Fitness=" << this->getFitness() << " ";
+        cout << "Fitness=" << this->getFitness(target) << " ";
 		for(unsigned long i = 0; i < this->lengthOfData; i++)
 		{
 			cout << this->dataArray[i] << " ";
 		}
 		cout << endl;
 		cout << this->arm->forward() << endl;
-		cout << "accuracy:" << sqrt((this->arm->forward() - target).squaredNorm()) << endl;
+		cout << "inaccuracy:" << sqrt((this->arm->forward() - this->target).squaredNorm()) << endl;
 	}
 
-    unsigned long Chromosome::getLength() {
+    unsigned long Chromosome::getLength() 
+	{
         return this->lengthOfData;
     }
 
-    long double Chromosome::getFitness() 
+    long double Chromosome::getFitness(TransferMatrix& target) 
 	{
 		if (this->isFitnessCached) 
 		{
@@ -89,6 +90,7 @@ namespace GeneticAlgorithm {
 		
 		ret = this->arm->forward(runParams);
 		
+		this->target = target;
 		ret = ret - this->target;
 		for(int i=0; i<3; i++)
 		{
@@ -114,28 +116,63 @@ namespace GeneticAlgorithm {
         return this->fitnessCached;
     }
 
-    Chromosome* Chromosome::crossover(Chromosome* another) {
-        if (another->getLength() != this->lengthOfData) {
+	void Chromosome::limiting(long double*& data, MatrixXd& limit)
+	{
+		for(int i=0; i<limit.rows(); i++)
+		{
+			if(data[i] > limit(i, 1))
+			{	
+				data[i] = limit(i, 1);
+			}
+			else if(data[i] < limit(i, 0))
+			{
+				data[i] = limit(i, 0);
+			}
+			else
+			{
+				continue;
+			}
+		}
+	}
+
+    Chromosome* Chromosome::crossover(Chromosome* another, MatrixXd& limit) 
+	{
+        if (another->getLength() != this->lengthOfData) 
+		{
             throw "Length not equals!";
         }
-        long double* newData = new long double[this->lengthOfData];
-        for (unsigned long i = 0; i < this->lengthOfData; i++) {
+        
+		long double* newData = new long double[this->lengthOfData];
+        
+		for (unsigned long i = 0; i < this->lengthOfData; i++) 
+		{
             newData[i] = (this->dataArray[i] + another->getGene(i)) / 2.0;
         }
+
+		limiting(newData, limit);
+
         Chromosome* newChromosome = ChromosomeFactory().buildFromArray(newData, this->lengthOfData);
         delete[] newData;
-        return newChromosome;
+        
+		return newChromosome;
     }
 
-    void Chromosome::mutation(long double r) {
-        if (r <= 0.0) {
+    void Chromosome::mutation(long double r, MatrixXd& limit) 
+	{
+        if (r <= 0.0) 
+		{
             return;
         }
+		
         using GeneticAlgorithm::Utils::GlobalCppRandomEngine;
         std::normal_distribution<long double> distribution(0, r);
-        for (unsigned long i = 0; i < this->lengthOfData; i++) {
+        
+		for (unsigned long i = 0; i < this->lengthOfData; i++) 
+		{
             this->dataArray[i] += distribution(GlobalCppRandomEngine::engine);
         }
+
+		limiting(this->dataArray, limit);
 
 		this->isFitnessCached = false;
     }

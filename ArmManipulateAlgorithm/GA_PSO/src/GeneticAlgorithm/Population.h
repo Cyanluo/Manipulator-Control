@@ -2,6 +2,7 @@
 #define GENETICALGORITHM_POPULATION_H
 
 #include "Chromosome.h"
+#include"DH_MechanicalArm.h"
 
 namespace GeneticAlgorithm {
 
@@ -26,6 +27,8 @@ namespace GeneticAlgorithm {
         Chromosome* getMaxFitnessChromosome();
         // 对种群中个体按照从大到小的顺序排序
         void sort();
+		// 设置最终位姿
+		void setTarget(TransferMatrix& target);
 
     private:
         // 染色体数量
@@ -38,7 +41,8 @@ namespace GeneticAlgorithm {
         Chromosome* maxFitnessChromosomeCache;
         // 最大适应度个体的偏移位置
         unsigned long maxFitnessChromosomeOffset;
-
+		// 机械臂到达的最后位姿
+		TransferMatrix target;
     };
 
 }

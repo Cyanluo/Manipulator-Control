@@ -15,12 +15,13 @@ SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 # 生成记录项目版本的头文件
 configure_file(GeneticAlgorithm.h.in GeneticAlgorithm.h)
 # 设置为扫描当前目录及子目录下所有.cpp结尾的文件并添加到CPP_FILES
-file(GLOB_RECURSE CPP_FILES ./ *.cpp /media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/mechanicalArmOp/src/TransferMatrix.cpp)
+# file(GLOB_RECURSE CPP_FILES ./ *.cpp /media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/mechanicalArmOp/src/TransferMatrix.cpp)
+file(GLOB_RECURSE CPP_FILES ./ *.cpp ../../mechanicalArmOp/src/TransferMatrix.cpp)
 # 设置为所有CPP_FILES中的文件都编译到可执行文件GeneticAlgorithm.out
 add_executable(GeneticAlgorithm.out ${CPP_FILES})
 # 给编译过程添加include的目录，这里是用于包含生成的记录项目版本的头文件
 target_include_directories(GeneticAlgorithm.out PUBLIC "${PROJECT_BINARY_DIR}")
-include_directories(/media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/mechanicalArmOp)
+include_directories(../../mechanicalArmOp/inc)
 # 为C++程序提供多线程库的链接支持，不需要使用多线程来开发时可以注释掉下面三行
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
