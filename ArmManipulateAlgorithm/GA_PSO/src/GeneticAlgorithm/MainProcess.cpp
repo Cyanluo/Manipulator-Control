@@ -9,7 +9,9 @@ namespace GeneticAlgorithm {
 
     MainProcess::MainProcess() 
 	{
-
+		this->newChromosome = nullptr;
+		this->selectedChromosome = nullptr;
+		this->populations = nullptr;
     }
 
     MainProcess::~MainProcess() 
@@ -18,6 +20,7 @@ namespace GeneticAlgorithm {
     }
 
     void MainProcess::run(
+		unsigned long numberOfPopulation,
         unsigned long numberOfChromosome,
         unsigned long lengthOfChromosome,
         MatrixXd& limit,
@@ -27,9 +30,10 @@ namespace GeneticAlgorithm {
         long double r,
 		TransferMatrix& target
     ) 
-	{
+	{	
         using namespace std;
-        this->freeMemory(); // 防止重复调用run()没有释放上一次的内存
+    	this->freeMemory(); // 防止重复调用run()没有释放上一次的内存    
+		this->numberOfPopulation = numberOfPopulation;
         this->numberOfChromosome = numberOfChromosome;
         this->lengthOfChromosome = lengthOfChromosome;
         this->keep = keep;
@@ -37,81 +41,44 @@ namespace GeneticAlgorithm {
         this->r = r;
 		this->target = target;
 		this->limit = limit;
-        this->init();
-		this->population->setTarget(this->target);
-        this->sort();
-        this->maxFitness = this->population->getMaxFitnessChromosome()->getFitness(this->target);
+        this->init(numberOfPopulation);
+		
+		for(int i=0; i<this->numberOfPopulation; i++)
+		{
+			this->populations[i]->setTarget(this->target);
+		}
+        
+		this->sort();
 
+		int index = 0;
+		getMaxFitness(index);
+		
         if (this->debug) 
 		{
-            cout << "代数=0, 最大适应度=" << this->maxFitness << ", 个体信息=";
-            this->population->getMaxFitnessChromosome()->dump();
-        }
+            cout << endl;
+			cout << "代数=0, 最大适应度=" << this->maxFitness << ", 个体信息=";
+			this->populations[index]->getMaxFitnessChromosome()->dump();
+		}
 
         while (this->loopNow < maxLoop && this->maxFitness < stopFitness) 
 		{
             this->select();
             this->crossover();
+			// 变异率自适应
+			this->pm = (this->r)*(1-(double(this->loopNow)/maxLoop));
             this->mutation();
             this->generated();
-            this->sort();
-            this->maxFitness = this->population->getMaxFitnessChromosome()->getFitness(this->target);
-            this->loopNow++;
-            if (this->debug) 
+            this->sort();           
+			this->loopNow++;
+            			
+			if (this->debug) 
 			{
+				getMaxFitness(index);
                 cout << "代数=" << this->loopNow << ", 最大适应度=" << this->maxFitness << ", 个体信息=";
-                this->population->getMaxFitnessChromosome()->dump();
+				this->populations[index]->getMaxFitnessChromosome()->dump();
             }
         }
-        if (this->debug) 
-		{
-            cout << "结束。" << endl;
-        }
-    }
-
-    void MainProcess::runContinue(
-        unsigned long maxLoop, // 这一次的最大迭代次数
-        long double stopFitness, // 达到多大的适应度就立刻停止迭代
-        unsigned long keep, // 每次迭代保留多少个上一代的个体
-        long double r, // 基因突变的概率
-		TransferMatrix& target
-    ) {
-        using namespace std;
-        if (nullptr == this->population || nullptr == this->selectedChromosome || nullptr == this->newChromosome) {
-            return;
-        }
-        if (this->keep != keep) { // 之前是keep=1的话，会因为优化而不会排序
-            if (1 == this->keep && keep > 1) { // 之前是keep=1的话，会因为优化而不会排序
-                this->keep = keep;
-                this->kill = this->numberOfChromosome - keep;
-                this->sort(); // 先排序避免后满淘汰掉较优解
-            } else {
-                this->keep = keep;
-                this->kill = this->numberOfChromosome - keep;
-            }
-            // 尺寸发生变化，删除旧的再申请新空间
-            delete[] this->selectedChromosome;
-            delete[] this->newChromosome;
-            this->selectedChromosome = new Chromosome*[2 * this->kill];
-            this->newChromosome = new Chromosome*[this->kill];
-        }
-        this->r = r;
-        unsigned long i = 0;
-        this->maxFitness = this->population->getMaxFitnessChromosome()->getFitness(this->target);
-        while (i < maxLoop && this->maxFitness < stopFitness) {
-            this->select();
-            this->crossover();
-            this->mutation();
-            this->generated();
-            this->sort();
-            this->maxFitness = this->population->getMaxFitnessChromosome()->getFitness(this->target);
-            this->loopNow++;
-            if (this->debug) {
-                cout << "代数=" << this->loopNow << ", 最大适应度=" << this->maxFitness << ", 个体信息=";
-                this->population->getMaxFitnessChromosome()->dump();
-            }
-            i++;
-        }
+		
         if (this->debug) 
 		{
             cout << "结束。" << endl;
@@ -127,42 +94,85 @@ namespace GeneticAlgorithm {
 	{
         return this->loopNow;
     }
-
+ 
     long double MainProcess::getMaxFitness() 
 	{
         return this->maxFitness;
     }
 
+	long double MainProcess::getMaxFitness(int& indexPopulation)
+	{
+		double ret = 0;
+
+		indexPopulation = 0;
+		this->maxFitness = 0;
+
+		for(int i=0; i<this->numberOfPopulation; i++)
+		{
+        	ret = this->populations[i]->getMaxFitnessChromosome()->getFitness(this->target);
+		
+			if(ret > this->maxFitness)
+			{
+				this->maxFitness = ret;
+				indexPopulation = i;
+			}
+		}
+
+		return ret;
+	}
+
     Chromosome* MainProcess::getMaxFitnessChromosome() 
 	{
-        return this->population->getMaxFitnessChromosome();
+		int index = 0;
+		getMaxFitness(index);
+        
+		return this->populations[index]->getMaxFitnessChromosome();
     }
 
-    void MainProcess::replaceChromosome(Chromosome* chromosome) 
-	{
-        Chromosome* maxChromosome = this->population->getMaxFitnessChromosome();
-        for (unsigned long offset = this->numberOfChromosome - 1; offset + 2 > 1; offset--) {
-            if ((void*)this->population->getChromosome(offset) != (void*)maxChromosome) {
-                this->population->replaceChromosome(offset, chromosome);
-                return;
-            }
-        }
-    }
+    // void MainProcess::replaceChromosome(Chromosome* chromosome) 
+	// {
+    //     Chromosome* maxChromosome = this->population->getMaxFitnessChromosome();
+        
+	// 	for (unsigned long offset = this->numberOfChromosome - 1; offset + 2 > 1; offset--) 
+	// 	{
+    //         if ((void*)this->population->getChromosome(offset) != (void*)maxChromosome) 
+	// 		{
+    //             this->population->replaceChromosome(offset, chromosome);
+                
+	// 			return;
+    //         }
+    //     }
+    // }
 
-    void MainProcess::init() 
+    void MainProcess::init(unsigned long numberOfPopulation) 
 	{
-        this->population = PopulationFactory().buildRandomPopulation(this->numberOfChromosome, this->lengthOfChromosome, this->limit);
+		this->populations = new Population*[numberOfPopulation];
+		this->selectedChromosome = new Chromosome**[numberOfPopulation];
+		this->newChromosome = new Chromosome**[numberOfPopulation];
+		
+		for(int i=0; i<this->numberOfPopulation; i++)
+		{
+			this->populations[i] = PopulationFactory().buildRandomPopulation(this->numberOfChromosome, this->lengthOfChromosome, this->limit);
+		}
+        
         this->loopNow = 0;
         this->maxFitness = 0.0;
-        this->selectedChromosome = new Chromosome*[2 * this->kill];
-        this->newChromosome = new Chromosome*[this->kill];
+
+		for(int i=0; i<this->numberOfPopulation; i++)
+		{
+			this->selectedChromosome[i] = new Chromosome*[2 * this->kill];
+        	this->newChromosome[i] = new Chromosome*[this->kill];			
+		}     
     }
 
     void MainProcess::sort() 
 	{
         if (1 != this->keep) 
 		{ // 为了优化流程，只保留一个的时候不必排序
-            this->population->sort();
+			for(int i=0; i<this->numberOfPopulation; i++)
+			{
+				this->populations[i]->sort();
+			}
         }
     }
 
@@ -177,28 +187,34 @@ namespace GeneticAlgorithm {
         uniform_int_distribution<unsigned long> range(0, this->numberOfChromosome - 1);
         
 		// 运行 generate 次选择
-        for (unsigned long i = 0; i < generate; i++) 
+		for(int i=0; i<this->numberOfPopulation; i++)
 		{
-            selectChromosome1 = this->population->getChromosome(range(GlobalCppRandomEngine::engine));
-            selectChromosome2 = this->population->getChromosome(range(GlobalCppRandomEngine::engine));
-            
-			if (selectChromosome1->getFitness(this->target) > selectChromosome2->getFitness(this->target)) 
+			for (unsigned long j = 0; j < generate; j++) 
 			{
-                this->selectedChromosome[i] = selectChromosome1;
-            } 
-			else 
-			{
-                this->selectedChromosome[i] = selectChromosome2;
-            }
-        }
+				selectChromosome1 = this->populations[i]->getChromosome(range(GlobalCppRandomEngine::engine));
+				selectChromosome2 = this->populations[i]->getChromosome(range(GlobalCppRandomEngine::engine));
+				
+				if (selectChromosome1->getFitness(this->target) > selectChromosome2->getFitness(this->target)) 
+				{
+					this->selectedChromosome[i][j] = selectChromosome1;
+				} 
+				else 
+				{
+					this->selectedChromosome[i][j] = selectChromosome2;
+				}
+			}
+		}	
     }
 
     void MainProcess::crossover() 
 	{
-        for (unsigned long i = 0; i < this->kill; i++) 
+		for(int i=0; i<this->numberOfPopulation; i++)
 		{
-            this->newChromosome[i] = this->selectedChromosome[2 * i]->crossover(this->selectedChromosome[1 + 2 * i], this->limit);
-        }
+			for (unsigned long j = 0; j < this->kill; j++) 
+			{
+				this->newChromosome[i][j] = this->selectedChromosome[i][2 * j]->crossover(this->selectedChromosome[i][1 + 2 * j], this->limit);
+			}
+		}
     }
 
     void MainProcess::mutation() 
@@ -207,57 +223,91 @@ namespace GeneticAlgorithm {
 		{
             return;
         }
-        for (unsigned long i = 0; i < this->kill; i++) 
+		
+		cout << " " << this->pm << " ";
+        
+		for(int i=0; i<this->numberOfPopulation; i++)
 		{
-            this->newChromosome[i]->mutation(this->r, this->limit);
-        }
+			for (unsigned long j = 0; j < this->kill; j++) 
+			{
+				this->newChromosome[i][j]->mutation(this->pm, this->limit);
+			}
+		}
     }
 
     void MainProcess::generated() 
 	{
         if (1 != this->keep) 
 		{
-            for (unsigned long i = this->keep; i < this->numberOfChromosome; i++) 
+			for(int i=0; i<this->numberOfPopulation; i++)
 			{
-                this->population->replaceChromosome(i, this->newChromosome[i - this->keep]);
-            }
+				for (unsigned long j = this->keep; j < this->numberOfChromosome; j++) 
+				{
+					this->populations[i]->replaceChromosome(j, this->newChromosome[i][j - this->keep]);
+				}
+			}
         } 
 		else 
 		{
-            unsigned long replaceOffset = 0, newChromosomePoolOffset = 0;
-            Chromosome* maxFitnessChromosome = this->population->getMaxFitnessChromosome();
-            
-			for (unsigned long i = 0; i < this->numberOfChromosome; i++) 
+			for(int i=0; i<this->numberOfPopulation; i++)
 			{
-                if ((void*)(this->population->getChromosome(replaceOffset)) != (void*)maxFitnessChromosome) 
-				{
-                    this->population->replaceChromosome(replaceOffset, this->newChromosome[newChromosomePoolOffset]);
-                    newChromosomePoolOffset++;
-                }
+				unsigned long replaceOffset = 0, newChromosomePoolOffset = 0;
+				Chromosome* maxFitnessChromosome = this->populations[i]->getMaxFitnessChromosome();
 				
-                replaceOffset++;
-            }
+				for (unsigned long j = 0; j < this->numberOfChromosome; j++) 
+				{
+					if ((void*)(this->populations[i]->getChromosome(replaceOffset)) != (void*)maxFitnessChromosome) 
+					{
+						this->populations[i]->replaceChromosome(replaceOffset, this->newChromosome[i][newChromosomePoolOffset]);
+						newChromosomePoolOffset++;
+					}
+					
+					replaceOffset++;
+				}
+
+				replaceOffset = 0; newChromosomePoolOffset = 0;
+			}
         }
     }
 
+	TransferMatrix MainProcess::getTarget()
+	{
+		return this->target;
+	}
+
     void MainProcess::freeMemory() 
 	{
-        if (nullptr != this->population) 
+		if(nullptr != this->populations)
 		{
-            delete this->population;
-            this->population = nullptr;
-        }
-        // selectedChromosome 指向 Population 实例里面的染色体，Population 会删除不需要在这里单独删染色体
-        if (nullptr != this->selectedChromosome) 
-		{
-            delete[] this->selectedChromosome;
-            this->selectedChromosome = nullptr;
-        }
-        // 这些染色体会替换 Population 里面的，Population 会在替换时自己删掉，不需要在这里单独删染色体
-        if (nullptr != this->newChromosome) 
-		{
-            delete[] this->newChromosome;
-            this->newChromosome = nullptr;
-        }
+			for(int i=0; i<this->numberOfPopulation; i++)
+			{
+				if (nullptr != this->populations[i]) 
+				{
+					delete this->populations[i];
+					this->populations[i] = nullptr;
+				}
+				
+				// selectedChromosome 指向 Population 实例里面的染色体，Population 会删除不需要在这里单独删染色体
+				if (nullptr != this->selectedChromosome[i]) 
+				{
+					delete[] this->selectedChromosome[i];
+					this->selectedChromosome[i] = nullptr;
+				}
+				
+				// 这些染色体会替换 Population 里面的，Population 会在替换时自己删掉，不需要在这里单独删染色体
+				if (nullptr != this->newChromosome[i]) 
+				{
+					delete[] this->newChromosome[i];
+					this->newChromosome[i] = nullptr;
+				}
+			}
+
+			delete[] this->newChromosome;
+			delete[] this->selectedChromosome;
+			delete[] this->populations;
+			this->newChromosome = nullptr;
+			this->selectedChromosome = nullptr;
+			this->populations = nullptr;
+		}
     }
 }

@@ -19,6 +19,7 @@ namespace GeneticAlgorithm {
 
         // 主流程运行
         void run(
+			unsigned long numberOfPopulation,
             unsigned long numberOfChromosome, // 种群中个体数量
             unsigned long lengthOfChromosome, // 每个个体的基因长度
             MatrixXd& limit,
@@ -28,25 +29,22 @@ namespace GeneticAlgorithm {
             long double r, // 基因突变的概率
 			TransferMatrix& target
         );
-        // 继续运行
-        void runContinue(
-            unsigned long maxLoop, // 这一次的最大迭代次数
-            long double stopFitness, // 达到多大的适应度就立刻停止迭代
-            unsigned long keep, // 每次迭代保留多少个上一代的个体
-            long double r, // 基因突变的概率
-			TransferMatrix& target
-        );
+
         // 设置debug模式，为true的时候打印调试信息
         void setDebug(bool enableDebug);
         // 获取迭代次数。如果在一开始初始化的那代种群就达到停止的条件，那么返回0
         unsigned long getLoopNumber();
         // 获取最大的适应度
         long double getMaxFitness();
+		long double getMaxFitness(int& indexPopulation);
         // 获取Fitness最大值的Chromosome
         Chromosome* getMaxFitnessChromosome();
         // 替换一个不是最好的个体为指定的个体
         void replaceChromosome(Chromosome* chromosome);
+		TransferMatrix getTarget();
+
     private:
+		unsigned long numberOfPopulation;
         // 染色体or个体的数量
         unsigned long numberOfChromosome;
         // 染色体的长度
@@ -62,18 +60,19 @@ namespace GeneticAlgorithm {
         // 保留每次迭代算出来的最大适应度
         long double maxFitness;
         // 迭代时存储选中的染色体or个体
-        Chromosome** selectedChromosome = nullptr;
+        Chromosome*** selectedChromosome = nullptr;
         // 迭代时存储新生成的个体or染色体
-        Chromosome** newChromosome = nullptr;
+        Chromosome*** newChromosome = nullptr;
         // 变异概率
         long double r;
+		long double pm;
         // 存储一个Population实例
-        Population* population = nullptr;
+        Population** populations = nullptr;
         // 是否开启调试
         bool debug = false;
 		TransferMatrix target;
         // 私有，初始化
-        void init();
+        void init(unsigned long numberOfPopulation);
         // 私有，对种群中个体按照适应度大小排序
         void sort();
         // 私有，选择个体

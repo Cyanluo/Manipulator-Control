@@ -117,22 +117,29 @@ namespace GeneticAlgorithm {
 
     Chromosome* Population::getMaxFitnessChromosome() 
 	{
-        if (this->isMaxFitnessChromosomeCache) {
+        if (this->isMaxFitnessChromosomeCache) 
+		{
             return this->maxFitnessChromosomeCache;
         }
-        long double maxFitness = std::numeric_limits<long double>::min();
+        
+		long double maxFitness = std::numeric_limits<long double>::min();
         unsigned long offset = 0;
         this->maxFitnessChromosomeCache = this->chromosomeArray[offset];
-        for (unsigned long i = 0; i < this->numberOfChromosome; i++) {
-            if (this->chromosomeArray[i]->getFitness(target) > maxFitness) {
+        
+		for (unsigned long i = 0; i < this->numberOfChromosome; i++) 
+		{
+            if (this->chromosomeArray[i]->getFitness(target) > maxFitness) 
+			{
                 offset = i;
                 maxFitness = this->chromosomeArray[i]->getFitness(target);
             }
 		}
-        this->isMaxFitnessChromosomeCache = true;
+        
+		this->isMaxFitnessChromosomeCache = true;
         this->maxFitnessChromosomeCache = this->chromosomeArray[offset];
         this->maxFitnessChromosomeOffset = offset;
-        return this->chromosomeArray[offset];
+        
+		return this->chromosomeArray[offset];
     }
 
 	void Population::setTarget(TransferMatrix& target)

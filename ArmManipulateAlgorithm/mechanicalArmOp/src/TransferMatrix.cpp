@@ -16,7 +16,7 @@ TransferMatrix& TransferMatrix::operator -(const TransferMatrix& other)
 	{
 		for(int i=0; i<this->cols(); i++)
 		{
-		this->col(i) -= other.col(i);
+			this->col(i) -= other.col(i);
 		}
 	}
 

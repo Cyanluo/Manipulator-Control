@@ -20,12 +20,12 @@ namespace GeneticAlgorithm {
         void run(
             unsigned long numberOfChromosome, // 种群中个体数量
             unsigned long lengthOfChromosome, // 每个个体的基因长度
-            long double min, // 一开始初始种群时，随机数范围最小值
-            long double max, // 一开始初始种群时，随机数范围最大值
+            MatrixXd& limit,
             unsigned long maxLoop, // 最大迭代次数
             long double stopFitness, // 达到多大的适应度就立刻停止迭代
             unsigned long keep, // 每次迭代保留多少个上一代的个体
-            long double r // 基因突变的概率
+            long double r, // 基因突变的概率
+			TransferMatrix& target
         );
         // 继续运行
         void runContinue(
