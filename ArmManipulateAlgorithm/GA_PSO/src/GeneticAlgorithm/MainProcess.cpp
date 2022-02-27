@@ -49,6 +49,7 @@ namespace GeneticAlgorithm {
 		}
         
 		this->sort();
+		
 
 		int index = 0;
 		getMaxFitness(index);
