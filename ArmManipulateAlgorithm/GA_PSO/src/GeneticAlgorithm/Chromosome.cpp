@@ -2,13 +2,16 @@
 #include "Chromosome.h"
 #include "ChromosomeFactory.h"
 #include "Utils/GlobalCppRandomEngine.h"
+#include <random>
 
 namespace GeneticAlgorithm {
 
     Chromosome::Chromosome(unsigned long lengthOfChromosome) 
 	{
         this->dataArray = new long double[lengthOfChromosome];
-        this->lengthOfData = lengthOfChromosome;
+		this->velocity = new long double[lengthOfChromosome];
+        
+		this->lengthOfData = lengthOfChromosome;
 
 		Matrix<float, JOINTN, 4> dh;
 		dh << -PI/2,   0,   2,   0,
@@ -25,20 +28,41 @@ namespace GeneticAlgorithm {
     Chromosome::~Chromosome() 
 	{
         delete[] this->dataArray;
+		delete[] this->velocity;
 		delete arm;
     }
 
     bool Chromosome::setGene(unsigned long offset, long double value) 
 	{
-        if (offset > this->lengthOfData - 1) {
+        if (offset > this->lengthOfData - 1) 
+		{
             return false;
         }
-        if (this->dataArray[offset] != value) {
+        
+		if (this->dataArray[offset] != value) 
+		{
             this->dataArray[offset] = value;
             this->isFitnessCached = false;
         }
-        return true;
+        
+		return true;
     }
+
+	bool Chromosome::setVelocity(unsigned long offset, long double value)
+	{
+		if (offset > this->lengthOfData - 1) 
+		{
+            return false;
+        }
+        
+		if (this->velocity[offset] != value) 
+		{
+            this->velocity[offset] = value;
+        }
+        
+		return true;
+	}
+
 
     long double Chromosome::getGene(unsigned long offset) 
 	{
@@ -50,14 +74,32 @@ namespace GeneticAlgorithm {
         return this->dataArray[offset];
     }
 
+	long double Chromosome::getVelocity(unsigned long offset)
+	{
+		if (offset > this->lengthOfData - 1) 
+		{
+            throw "Error, out of range.";
+        }
+
+        return this->velocity[offset];
+	}
+
     void Chromosome::dump() 
 	{
         cout << "Fitness=" << this->getFitness(target) << " ";
+		
 		for(unsigned long i = 0; i < this->lengthOfData; i++)
 		{
 			cout << this->dataArray[i] << " ";
 		}
 		cout << endl;
+
+		for(unsigned long i = 0; i < this->lengthOfData; i++)
+		{
+			cout << this->velocity[i] << " ";
+		}
+		cout << endl;
+
 		cout << this->arm->forward() << endl;
 		cout << "inaccuracy:" << sqrt((this->arm->forward() - this->target).squaredNorm()) << endl;
 	}
@@ -118,7 +160,7 @@ namespace GeneticAlgorithm {
 
 	void Chromosome::limiting(long double*& data, MatrixXd& limit)
 	{
-		for(int i=0; i<limit.rows(); i++)
+		for(int i=0; i<this->lengthOfData; i++)
 		{
 			if(data[i] > limit(i, 1))
 			{	
@@ -135,6 +177,48 @@ namespace GeneticAlgorithm {
 		}
 	}
 
+	// 限制速度大小，不改变方向
+	void Chromosome::limiting(long double*& data, long double min, long double max)
+	{
+		long double v = 0.0;
+
+		for(int i=0; i<this->lengthOfData; i++)
+		{
+			v += data[i] * data[i];
+		}
+		
+		if( (-0.000001 < v) && (v < 0.000001) )
+		{
+			return;
+		}
+
+		v = sqrt(v);
+
+		if( (min <= v) && (v <= max) )
+		{
+			return;
+		}
+		else if(v < min)
+		{
+			for(int i=0; i<this->lengthOfData; i++)
+			{
+				data[i] = data[i] / v * min;
+			}
+		}
+		else
+		{
+			for(int i=0; i<this->lengthOfData; i++)
+			{
+				data[i] = data[i] / v * max;
+			}
+		}
+	}
+
+	void Chromosome::limitV(long double min, long double max)
+	{
+		limiting(this->velocity, min, max);
+	}
+
     Chromosome* Chromosome::crossover(Chromosome* another, MatrixXd& limit) 
 	{
         if (another->getLength() != this->lengthOfData) 
@@ -143,16 +227,21 @@ namespace GeneticAlgorithm {
         }
         
 		long double* newData = new long double[this->lengthOfData];
+		long double* newVelocity = new long double[this->lengthOfData];
         
 		for (unsigned long i = 0; i < this->lengthOfData; i++) 
 		{
             newData[i] = (this->dataArray[i] + another->getGene(i)) / 2.0;
-        }
+			newVelocity[i] = (this->velocity[i] + another->getVelocity(i)) / 2.0;
+		}
 
 		limiting(newData, limit);
+		limiting(newVelocity, limit(this->lengthOfData, 0), limit(this->lengthOfData, 1));
 
-        Chromosome* newChromosome = ChromosomeFactory().buildFromArray(newData, this->lengthOfData);
-        delete[] newData;
+        Chromosome* newChromosome = ChromosomeFactory().buildFromArray(newData, newVelocity, this->lengthOfData);
+        
+		delete[] newData;
+		delete[] newVelocity;
         
 		return newChromosome;
     }
@@ -173,7 +262,89 @@ namespace GeneticAlgorithm {
         }
 
 		limiting(this->dataArray, limit);
-
+		
 		this->isFitnessCached = false;
     }
+
+	void Chromosome::arrayMUL(long double*& dst, long double*& l, long double c)
+	{
+		if(dst != nullptr)
+		{
+			for(int i=0; i<this->lengthOfData; i++)
+			{
+				dst[i] = l[i] * c;
+			}
+		}
+	}
+
+	void Chromosome::arraySUB(long double*& dst, long double*& l, long double*& r)
+	{
+		if(dst != nullptr)
+		{
+			for(int i=0; i<this->lengthOfData; i++)
+			{
+				dst[i] = l[i] - r[i];
+			}
+		}
+	}
+
+	void Chromosome::arrayADD(long double*& dst, long double*& l, long double*& r)
+	{
+		if(dst != nullptr)
+		{
+			for(int i=0; i<this->lengthOfData; i++)
+			{
+				dst[i] = l[i] + r[i];
+			}
+		}
+	}
+
+	void Chromosome::arrayCOPY(long double*& src, long double*& dst)
+	{
+		for(int i=0; i<this->lengthOfData; i++)
+		{
+			dst[i] = src[i];
+		}
+	}
+
+	void Chromosome::PSO(long double*& pbest,
+						long double*& gbest,
+						long double w,
+						long double c1,
+						long double c2,
+						MatrixXd& limit)
+	{
+		long double* ptemp = new long double[this->lengthOfData];
+		long double* gtemp = new long double[this->lengthOfData];
+		long double* vtemp = new long double[this->lengthOfData];
+
+		arraySUB(ptemp, pbest, this->dataArray);
+		arraySUB(gtemp, gbest, this->dataArray);
+
+		std::uniform_real_distribution<long double> engine(0, 1);
+
+		arrayMUL(ptemp, ptemp, c1*engine(Utils::GlobalCppRandomEngine::engine));
+		arrayMUL(gtemp, gtemp, c2*engine(Utils::GlobalCppRandomEngine::engine));
+		arrayMUL(vtemp, this->velocity, w);
+
+		arrayADD(ptemp, ptemp, gtemp);
+		arrayADD(this->velocity, ptemp, vtemp);
+		
+		limitV(limit(this->lengthOfData, 0), limit(this->lengthOfData, 1));
+
+		arrayADD(this->dataArray, this->dataArray, this->velocity);
+
+		limiting(this->dataArray, limit);
+		
+		this->isFitnessCached = false;
+
+		delete[] ptemp;
+		delete[] gtemp;
+		delete[] vtemp;
+	}
+
+	void Chromosome::getData(long double*& dst)
+	{
+		arrayCOPY(this->dataArray, dst);
+	}
 }

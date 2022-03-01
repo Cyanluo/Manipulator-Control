@@ -4,47 +4,70 @@
 
 namespace GeneticAlgorithm {
 
-    Population::Population(unsigned long numberOfChromosome) {
+    Population::Population(unsigned long numberOfChromosome) 
+	{
         this->chromosomeArray = new Chromosome*[numberOfChromosome];
-        for (unsigned long i = 0; i < numberOfChromosome; i++) { // 新建立的数组，任意的 this->chromosomeArray[i] 未必是 0x00
+        
+		for (unsigned long i = 0; i < numberOfChromosome; i++) 
+		{ // 新建立的数组，任意的 this->chromosomeArray[i] 未必是 0x00
             this->chromosomeArray[i] = nullptr;
         }
-        this->numberOfChromosome = numberOfChromosome;
+        
+		this->numberOfChromosome = numberOfChromosome;
     }
 
-    Population::~Population() {
-        for (unsigned long i = 0; i < this->numberOfChromosome; i++) {
-            if (nullptr != this->chromosomeArray[i]) {
+    Population::~Population() 
+	{
+        for (unsigned long i = 0; i < this->numberOfChromosome; i++) 
+		{
+            if (nullptr != this->chromosomeArray[i]) 
+			{
                 delete this->chromosomeArray[i];
             }
         }
+
         delete[] this->chromosomeArray;
     }
 
-    bool Population::setChromosome(unsigned long offset, Chromosome *chromosome) {
-        if (offset >= this->numberOfChromosome) {
+    bool Population::setChromosome(unsigned long offset, Chromosome *chromosome) 
+	{
+        if (offset >= this->numberOfChromosome) 
+		{
             return false;
         }
-        if (nullptr == this->chromosomeArray[offset]) {
+        
+		if (nullptr == this->chromosomeArray[offset]) 
+		{
             this->chromosomeArray[offset] = chromosome;
             this->isMaxFitnessChromosomeCache = false;
             return true;
         }
-        Chromosome* origin = this->chromosomeArray[offset];
-        if ((void*)origin == (void*)chromosome) {
+        
+		Chromosome* origin = this->chromosomeArray[offset];
+        
+		if ((void*)origin == (void*)chromosome) 
+		{
             return true;
         }
-        if (this->isMaxFitnessChromosomeCache) {
-            if ((void*)(this->maxFitnessChromosomeCache) == (void*)chromosome) {
+        
+		if (this->isMaxFitnessChromosomeCache) 
+		{
+            if ((void*)(this->maxFitnessChromosomeCache) == (void*)chromosome) 
+			{
                 return false;
             }
-            if (this->maxFitnessChromosomeCache->getFitness(target) > chromosome->getFitness(target)) {
+            
+			if (this->maxFitnessChromosomeCache->getFitness(target) > chromosome->getFitness(target)) 
+			{
                 this->isMaxFitnessChromosomeCache = false;
-            } else {
+            } 
+			else 
+			{
                 this->maxFitnessChromosomeCache = chromosome;
             }
         }
-        this->chromosomeArray[offset] = chromosome;
+        
+		this->chromosomeArray[offset] = chromosome;
         delete origin;
         return true;
     }
@@ -56,13 +79,17 @@ namespace GeneticAlgorithm {
 
     Chromosome* Population::getChromosome(unsigned long offset)
 	{
-        if (offset >= this->numberOfChromosome) {
+        if (offset >= this->numberOfChromosome) 
+		{
             throw "Error, offset out of range, in \"Population::getChromosome\".";
         }
-        if (!this->chromosomeArray[offset]) {
+        
+		if (!this->chromosomeArray[offset]) 
+		{
             throw "Null pointer exception.";
         }
-        return this->chromosomeArray[offset];
+        
+		return this->chromosomeArray[offset];
     }
 
     unsigned long Population::getSize() 
@@ -70,7 +97,8 @@ namespace GeneticAlgorithm {
         return this->numberOfChromosome;
     }
 
-    void Population::sort() {
+    void Population::sort() 
+	{
 		//cout << "number" << this->numberOfChromosome << endl;
 		// cout << endl;
 		// for(int i=0; i< this->numberOfChromosome; i++)
@@ -145,6 +173,24 @@ namespace GeneticAlgorithm {
 	void Population::setTarget(TransferMatrix& target)
 	{
 		this->target = target;
+	}
+
+	void Population::resetMaxFitnessChCach()
+	{
+		this->isMaxFitnessChromosomeCache = false;
+	}
+
+	void Population::PSO(long double*& pbest,
+						long double*& gbest,
+						long double w,
+						long double c1,
+						long double c2,
+						MatrixXd& limit)
+	{		
+		for (int i = 0; i < this->numberOfChromosome; i++) 
+		{
+            this->chromosomeArray[i]->PSO(pbest, gbest, w, c1, c2, limit);
+		}
 	}
 
 }

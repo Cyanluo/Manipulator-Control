@@ -38,6 +38,7 @@ const int JOINTN = 5;
          * @return bool 成功返回 true
          */
         bool setGene(unsigned long offset, long double value);
+        bool setVelocity(unsigned long offset, long double value);
 
         /**
          * 获取给定位置的实数大小
@@ -46,6 +47,7 @@ const int JOINTN = 5;
          * @return long double value 实数的值
          */
         long double getGene(unsigned long offset);
+        long double getVelocity(unsigned long offset);
 
         /**
          * 打印调试信息
@@ -83,20 +85,35 @@ const int JOINTN = 5;
          * @return void
          */
         void mutation(long double r, MatrixXd& limit);
-
+		void limitV(long double min, long double max);
+		void PSO(long double*& pbest,
+		 		 long double*& gbest,
+				 long double w,
+				 long double c1,
+				 long double c2,
+				 MatrixXd& limit);
+		
+		void getData(long double*& dst);
     private:
 		void limiting(long double*& data, MatrixXd& limit);
-
-        /** @var unsigned long 保存了此染色体的长度 */
+		void limiting(long double*& data, long double min, long double max);
+		void arrayMUL(long double*& dst, long double*& l, long double c);
+		void arraySUB(long double*& dst, long double*& l, long double*& r);
+        void arrayADD(long double*& dst, long double*& l, long double*& r);
+		void arrayCOPY(long double*& src, long double*& dst);
+		// @var unsigned long 保存了此染色体的长度 
         unsigned long lengthOfData;
 
-        /** @var long double* 保存了此染色体中基因的信息 */
+        // @var long double* 保存了此染色体中基因的信息 
         long double* dataArray;
 
-        /** @var bool 为true时表示计算Fitness后缓存了计算结果，可以不用重复算 */
+		// @var long double* 保存了PSO算法的速度
+		long double* velocity;
+
+        // @var bool 为true时表示计算Fitness后缓存了计算结果，可以不用重复算
         bool isFitnessCached = false;
 
-        /** @var long double 缓存的上一次的适应度计算结果。需要判断isFitnessCached以确定确实缓存下来了。 */
+        // @var long double 缓存的上一次的适应度计算结果。需要判断isFitnessCached以确定确实缓存下来了。
         long double fitnessCached;
 
 		JMechArm<5, 5>* arm;

@@ -7,7 +7,7 @@
 
 namespace GeneticAlgorithm {
 
-    MainProcess::MainProcess() 
+    MainProcess::MainProcess():w(0), c1(0), c2(0), isPSOEabled(false)
 	{
 		this->newChromosome = nullptr;
 		this->selectedChromosome = nullptr;
@@ -50,7 +50,6 @@ namespace GeneticAlgorithm {
         
 		this->sort();
 		
-
 		int index = 0;
 		getMaxFitness(index);
 		
@@ -65,11 +64,16 @@ namespace GeneticAlgorithm {
 		{
             this->select();
             this->crossover();
+
 			// 变异率自适应
 			this->pm = (this->r)*(1-(double(this->loopNow)/maxLoop));
-            this->mutation();
+            if(this->pm < (this->r / 3))
+				this->pm = this->r / 3;
+
+			this->mutation();			
             this->generated();
-            this->sort();           
+			this->PSO();
+			this->sort();
 			this->loopNow++;
             			
 			if (this->debug) 
@@ -129,21 +133,6 @@ namespace GeneticAlgorithm {
         
 		return this->populations[index]->getMaxFitnessChromosome();
     }
-
-    // void MainProcess::replaceChromosome(Chromosome* chromosome) 
-	// {
-    //     Chromosome* maxChromosome = this->population->getMaxFitnessChromosome();
-        
-	// 	for (unsigned long offset = this->numberOfChromosome - 1; offset + 2 > 1; offset--) 
-	// 	{
-    //         if ((void*)this->population->getChromosome(offset) != (void*)maxChromosome) 
-	// 		{
-    //             this->population->replaceChromosome(offset, chromosome);
-                
-	// 			return;
-    //         }
-    //     }
-    // }
 
     void MainProcess::init(unsigned long numberOfPopulation) 
 	{
@@ -270,6 +259,37 @@ namespace GeneticAlgorithm {
 			}
         }
     }
+
+	void MainProcess::setPSO(double w, double c1, double c2)
+	{
+		isPSOEabled = true;
+		this->w = w;
+		this->c1 = c1;
+		this->c2 = c2;
+	}
+
+	void MainProcess::PSO()
+	{
+		if(isPSOEabled)
+		{			
+			long double* gbest = new long double[this->lengthOfChromosome];
+			getMaxFitnessChromosome()->getData(gbest);
+			long double* pbest = nullptr;
+
+			for(int i=0; i<this->numberOfPopulation; i++)
+			{
+				pbest = new long double[this->lengthOfChromosome];
+				
+				this->populations[i]->getMaxFitnessChromosome()->getData(pbest);
+				this->populations[i]->PSO(pbest, gbest, w, c1, c2, limit);
+				this->populations[i]->resetMaxFitnessChCach();
+
+				delete[] pbest;
+			}
+
+			delete[] gbest;
+		}
+	}
 
 	TransferMatrix MainProcess::getTarget()
 	{

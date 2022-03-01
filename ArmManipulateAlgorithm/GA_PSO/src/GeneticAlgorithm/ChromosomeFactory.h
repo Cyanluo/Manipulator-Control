@@ -23,7 +23,7 @@ namespace GeneticAlgorithm {
          * @param unsigned long lengthOfData 数组的长度
          * @return Chromosome*
          */
-        Chromosome* buildFromArray(long double data[], unsigned long lengthOfData);
+        Chromosome* buildFromArray(long double data[], long double velocity[], unsigned long lengthOfData);
 
         /**
          * 随机地创建染色体

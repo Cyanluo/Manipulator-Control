@@ -42,7 +42,7 @@ namespace GeneticAlgorithm {
         // 替换一个不是最好的个体为指定的个体
         void replaceChromosome(Chromosome* chromosome);
 		TransferMatrix getTarget();
-
+		void setPSO(double w, double c1, double c2);
     private:
 		unsigned long numberOfPopulation;
         // 染色体or个体的数量
@@ -83,9 +83,17 @@ namespace GeneticAlgorithm {
         void mutation();
         // 私有，新个体替换上一代中不需要保留的个体
         void generated();
+		void PSO();
         // 私有，把上一次run中申请的内存释放
         void freeMemory();
-
+		
+		bool isPSOEabled;
+		// pos参数:w 惯性权重
+		double w;
+		// pos参数:c1 表示粒子下一步动作来源于自己种群经验部分所占的权重
+		double c1;
+		// pos参数:c2 表示粒子下一步动作来源于其它种群粒子经验部分所占的权重
+		double c2;
     };
 
 }

@@ -25,7 +25,7 @@ int main()
 
 	TransferMatrix wf;
 
-	DH_MechanicalArm<5, 5> arm(dh, wf);
+	DH_MechanicalArm<JOINTN, JOINTN> arm(dh, wf);
 
 	VectorXf runParams(JOINTN, 1);
 	runParams << RADIAN(-60),RADIAN(50),RADIAN(-10),RADIAN(-23),RADIAN(0);
@@ -33,23 +33,25 @@ int main()
 	TransferMatrix target = arm.forward(runParams);
 
     MainProcess mainProcess = MainProcess();
-	MatrixXd limit(5, 2);
+	MatrixXd limit(JOINTN+1, 2);
 
 	limit << -90, 90,
 			-90, 90,
 			-90, 90,
 			-90, 10,
-			0, 0;
+			0, 0,
+			0, 2; // 速度限制
 
 	mainProcess.setDebug(true);
+	mainProcess.setPSO(0.1, 0.5, 1);
     mainProcess.run(
-		3,	// 种群数量
-        150, // 种群大小
-        5, // 染色体长度
+		4,	// 种群数量
+        50, // 种群大小
+        JOINTN, // 染色体长度
 		limit, // 每个基因的限制
         50, // 最大迭代次数
         10, // 停止迭代适应度
-        40, // 每次迭代保留多少个上一代的高适应度个体
+        20, // 每次迭代保留多少个上一代的高适应度个体
         1, // 变异调整参数
 		target // 寻优的目标
     );

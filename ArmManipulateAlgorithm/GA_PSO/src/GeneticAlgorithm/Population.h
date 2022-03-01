@@ -29,6 +29,13 @@ namespace GeneticAlgorithm {
         void sort();
 		// 设置最终位姿
 		void setTarget(TransferMatrix& target);
+		void resetMaxFitnessChCach();
+		void PSO(long double*& pbest,
+				long double*& gbest,
+				 long double w,
+				 long double c1,
+				 long double c2,
+				 MatrixXd& limit);
 
     private:
         // 染色体数量
