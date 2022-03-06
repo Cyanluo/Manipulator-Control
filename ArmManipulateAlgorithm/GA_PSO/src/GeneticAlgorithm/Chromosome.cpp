@@ -325,6 +325,8 @@ namespace GeneticAlgorithm {
 
 		arrayMUL(ptemp, ptemp, c1*engine(Utils::GlobalCppRandomEngine::engine));
 		arrayMUL(gtemp, gtemp, c2*engine(Utils::GlobalCppRandomEngine::engine));
+		//arrayMUL(ptemp, ptemp, c1);
+		//arrayMUL(gtemp, gtemp, c2);
 		arrayMUL(vtemp, this->velocity, w);
 
 		arrayADD(ptemp, ptemp, gtemp);

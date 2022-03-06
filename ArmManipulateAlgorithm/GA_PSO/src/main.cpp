@@ -8,13 +8,14 @@
 #include "GeneticAlgorithm/Multithreading.h"
 
 #include <unistd.h>
+#include <chrono>
 
 using namespace GeneticAlgorithm;
 using namespace std;
 
 int main()
 {
-	cout  << fixed << setprecision(2);
+	cout  << fixed << setprecision(3);
 
 	Matrix<float, JOINTN, 4> dh;
 	dh << -PI/2,   0,   2,   0,
@@ -28,8 +29,7 @@ int main()
 	DH_MechanicalArm<JOINTN, JOINTN> arm(dh, wf);
 
 	VectorXf runParams(JOINTN, 1);
-	runParams << RADIAN(-60),RADIAN(50),RADIAN(-10),RADIAN(-23),RADIAN(0);
-
+	runParams << RADIAN(-20),RADIAN(50),RADIAN(-20),RADIAN(-80),RADIAN(10);
 	TransferMatrix target = arm.forward(runParams);
 
     MainProcess mainProcess = MainProcess();
@@ -39,29 +39,53 @@ int main()
 			-90, 90,
 			-90, 90,
 			-90, 10,
-			0, 0,
-			0, 2; // 速度限制
+			-90, 90,
+			-9, 9; // 粒子群速度限制
 
 	mainProcess.setDebug(true);
-	mainProcess.setPSO(0.1, 0.5, 1);
-    mainProcess.run(
-		4,	// 种群数量
-        50, // 种群大小
+    mainProcess.setPSO(
+		0.2, // w 惯性权重
+		1.8, // c1 种群内权重
+		2	 // c2 种群间权重
+	);
+	
+	auto start0 = chrono::steady_clock::now();
+	
+	mainProcess.run(
+		5,	// 种群数量
+        25, // 种群大小
         JOINTN, // 染色体长度
 		limit, // 每个基因的限制
-        50, // 最大迭代次数
-        10, // 停止迭代适应度
-        20, // 每次迭代保留多少个上一代的高适应度个体
-        1, // 变异调整参数
+        40, // 最大迭代次数
+        20, // 停止迭代适应度
+        18, // 每次迭代保留多少个上一代的高适应度个体
+        1.1, // 变异调整参数
 		target // 寻优的目标
     );
 
+	// mainProcess.run(
+	// 	1,	// 种群数量
+    //     125, // 种群大小
+    //     JOINTN, // 染色体长度
+	// 	limit, // 每个基因的限制
+    //     100, // 最大迭代次数
+    //     99.9, // 停止迭代适应度
+    //     25, // 每次迭代保留多少个上一代的高适应度个体
+    //     1.1, // 变异调整参数
+	// 	target // 寻优的目标
+    // );
+
 	cout << "target:" << endl << target << endl;
+	
+	auto end0 = chrono::steady_clock::now();
+	chrono::duration<double> elapsed0 = end0 - start0;
+	int time =  elapsed0.count()*1000;
+	cout << "Timeeeeeeeeeeeeeeeeeeeeeeeee=============================solve func time: " << time << "ms" << endl;
+	
+	cout << mainProcess.getPlotData() << endl;
 
-    return 0;
+	return 0;
 }
-
-// 多线程版本
 
 // int main()
 // {

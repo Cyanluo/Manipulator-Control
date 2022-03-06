@@ -1,7 +1,7 @@
 #ifndef GENETICALGORITHM_CHROMOSOME_H
 #define GENETICALGORITHM_CHROMOSOME_H
 
-#include"DH_MechanicalArm.h"
+#include "DH_MechanicalArm.h"
 #include<math.h>
 
 namespace GeneticAlgorithm {

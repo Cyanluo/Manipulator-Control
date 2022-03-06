@@ -4,6 +4,11 @@
 #include "PopulationFactory.h"
 #include "Utils/GlobalCppRandomEngine.h"
 #include "Chromosome.h"
+#include <sstream>
+#include <iomanip>
+
+#define DOUBLE_TO_STRING(n, fixed) ( ((ostringstream&)(ostringstream() << std::setprecision(fixed) << n)).str() )
+#define INT_TO_STRING(n) ( ((ostringstream&)(ostringstream() << n)).str() )
 
 namespace GeneticAlgorithm {
 
@@ -12,6 +17,7 @@ namespace GeneticAlgorithm {
 		this->newChromosome = nullptr;
 		this->selectedChromosome = nullptr;
 		this->populations = nullptr;
+        this->plotData = "";
     }
 
     MainProcess::~MainProcess() 
@@ -67,12 +73,12 @@ namespace GeneticAlgorithm {
 
 			// 变异率自适应
 			this->pm = (this->r)*(1-(double(this->loopNow)/maxLoop));
-            if(this->pm < (this->r / 3))
-				this->pm = this->r / 3;
+            if(this->pm < (this->r / 2))
+				this->pm = this->r / 2;
 
 			this->mutation();			
             this->generated();
-			this->PSO();
+			this->PSO(); // 用粒子群算法优化
 			this->sort();
 			this->loopNow++;
             			
@@ -82,6 +88,11 @@ namespace GeneticAlgorithm {
                 cout << "代数=" << this->loopNow << ", 最大适应度=" << this->maxFitness << ", 个体信息=";
 				this->populations[index]->getMaxFitnessChromosome()->dump();
             }
+
+            this->plotData += INT_TO_STRING(this->loopNow);
+            this->plotData += ",";
+            this->plotData += DOUBLE_TO_STRING(this->maxFitness, 2);
+            this->plotData += ";";
         }
 		
         if (this->debug) 
@@ -103,6 +114,11 @@ namespace GeneticAlgorithm {
     long double MainProcess::getMaxFitness() 
 	{
         return this->maxFitness;
+    }
+
+    string MainProcess::getPlotData()
+    {
+        return this->plotData;
     }
 
 	long double MainProcess::getMaxFitness(int& indexPopulation)

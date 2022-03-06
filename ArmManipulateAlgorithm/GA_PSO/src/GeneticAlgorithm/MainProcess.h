@@ -3,6 +3,7 @@
 
 #include "Population.h"
 #include "Chromosome.h"
+#include <string>
 
 namespace GeneticAlgorithm {
 
@@ -43,6 +44,7 @@ namespace GeneticAlgorithm {
         void replaceChromosome(Chromosome* chromosome);
 		TransferMatrix getTarget();
 		void setPSO(double w, double c1, double c2);
+        string getPlotData();
     private:
 		unsigned long numberOfPopulation;
         // 染色体or个体的数量
@@ -86,7 +88,9 @@ namespace GeneticAlgorithm {
 		void PSO();
         // 私有，把上一次run中申请的内存释放
         void freeMemory();
-		
+
+        string plotData;
+
 		bool isPSOEabled;
 		// pos参数:w 惯性权重
 		double w;
