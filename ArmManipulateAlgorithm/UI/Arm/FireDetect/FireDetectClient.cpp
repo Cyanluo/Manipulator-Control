@@ -15,7 +15,8 @@ FireDetectClient::FireDetectClient(QObject *parent)
 
     m_mqttClient = new MqttHandle(log_info);
 
-    connect(m_mqttClient.get(), &MqttHandle::mqttReceive, this, &FireDetectClient::mqttEventDispose);
+    connect(m_mqttClient.get(), &MqttHandle::mqttReceiveCommand, this, &FireDetectClient::mqttCommendDispose);
+    connect(m_mqttClient.get(), &MqttHandle::mqttReceiveData, this, &FireDetectClient::mqttDataDispose);
 
     executeStatusBuffer = new QByteArray(STATUSNUMBER, 0);
     statusBuffer = new QByteArray(STATUSNUMBER, 0);
@@ -38,6 +39,7 @@ void FireDetectClient::initGAPSO()
     GA_PSO = new MainProcess();
     limit = new MatrixXd(JOINTN+1, 2);
     target = new TransferMatrix();
+    runParams = new VectorXf(JOINTN, 1);
 
     Matrix<float, JOINTN, 4> dh;
     dh << -PI/2,   0,   2,   0,
@@ -48,11 +50,7 @@ void FireDetectClient::initGAPSO()
 
     TransferMatrix wf;
 
-    DH_MechanicalArm<JOINTN, JOINTN> arm(dh, wf);
-
-    VectorXf runParams(JOINTN, 1);
-    runParams << RADIAN(-20),RADIAN(50),RADIAN(-20),RADIAN(-80),RADIAN(10);
-    (*target) = arm.forward(runParams);
+    arm = new DH_MechanicalArm<JOINTN, JOINTN>(dh, wf);
 
     (*limit) << -90, 90,
             -90, 90,
@@ -61,7 +59,7 @@ void FireDetectClient::initGAPSO()
             -90, 90,
             -9, 9; // 粒子群速度限制
 
-    GA_PSO->setDebug(false);
+    GA_PSO->setDebug(true);
 
     GA_PSO->setPSO(
             0.2, // w 惯性权重
@@ -100,17 +98,47 @@ void FireDetectClient::resetEStatus(int statusid)
     (*executeStatusBuffer)[statusid] = 0;
 }
 
-void FireDetectClient::mqttEventDispose(QMQTT::Message message)
+void FireDetectClient::mqttCommendDispose(QMQTT::Message message)
 {
     if( message.topic().startsWith(m_mqttClient->topic("pc_command")) )
     {
-        QByteArray data = message.payload();
+        string str_cmd = message.payload().toStdString();
 
-        switch(data.at(0))
+        int cmd = -1;
+        TO_NUMBER(str_cmd, cmd);
+
+        switch(cmd)
         {
             case ActionExecute:
             {
                 actionExecute();
+                break;
+            }
+
+            default: break;
+        }
+    }
+}
+
+//id;data
+void FireDetectClient::mqttDataDispose(QMQTT::Message message)
+{
+    if( message.topic().startsWith(m_mqttClient->topic("pc_dataChannel1")) )
+    {
+        string data = message.payload().toStdString();
+        QString qdata = QString::fromStdString(data);
+
+        QStringList qdataList = qdata.split(';', QString::SkipEmptyParts);
+        QString str_dtype = qdataList.at(0);
+
+        int dtype = -1;
+        TO_NUMBER(str_dtype.toStdString(), dtype);
+
+        switch(dtype)
+        {
+            case ReceiveRunParams:
+            {
+                loadRunParams( const_cast<QString&>(qdataList.at(1)) );
                 break;
             }
 
@@ -144,22 +172,36 @@ void FireDetectClient::run(int eventid)
     {
         case ActionExecute:
         {
-            if( !isSBFSet(RunParamBufferFull) )
+            if( isSBFSet(RunParamBufferFull) )
             {
                 resetStatus(ActionExecute); // cup ack
                 setEStatus(ActionExecute); // runing
+
+                (*target) = (*arm).forward(*runParams);
 
                 GA_PSO->run(
                         5,	// 种群数量
                         25, // 种群大小
                         JOINTN, // 染色体长度
                         *limit, // 每个基因的限制
-                        40, // 最大迭代次数
-                        20, // 停止迭代适应度
-                        18, // 每次迭代保留多少个上一代的高适应度个体
+                        100, // 最大迭代次数
+                        99.99, // 停止迭代适应度
+                        25, // 每次迭代保留多少个上一代的高适应度个体
                         1.1, // 变异调整参数
                         *target // 寻优的目标
                     );
+
+//                GA_PSO->run(
+//                        1,	// 种群数量
+//                        125, // 种群大小
+//                        JOINTN, // 染色体长度
+//                        *limit, // 每个基因的限制
+//                        100, // 最大迭代次数
+//                        99.9, // 停止迭代适应度
+//                        25, // 每次迭代保留多少个上一代的高适应度个体
+//                        1.1, // 变异调整参数
+//                        *target // 寻优的目标
+//                    );
 
                 string plotData = GA_PSO->getPlotData();
 
@@ -170,10 +212,6 @@ void FireDetectClient::run(int eventid)
                 resetEStatus(ActionExecute); // finish
             }
 
-            break;
-        }
-        case BUSY:
-        {
             break;
         }
 
@@ -189,8 +227,31 @@ void FireDetectClient::actionExecute()
     }
     else
     {
-        setStatus(BUSY);
+        deviceBusy("BUSY: actionExecute");
     }
+}
+
+void FireDetectClient::loadRunParams(QString& runParams)
+{
+    if(!isSBFSet(RunParamBufferFull))
+    {
+        QStringList qdataList = runParams.split(',', QString::SkipEmptyParts);
+
+        double temp = 0;
+
+        for(int i=0; i<JOINTN; i++)
+        {
+            TO_NUMBER(const_cast<QString&>(qdataList.at(i)).toStdString(), temp);
+            (*(this->runParams))[i] = RADIAN(temp);
+        }
+
+        setStatus(RunParamBufferFull);
+    }
+}
+
+void FireDetectClient::deviceBusy(QString msg)
+{
+    m_mqttClient->Publish_data(m_mqttClient->topic("busy"), msg);
 }
 
 void FireDetectClient::send_img()
@@ -209,4 +270,5 @@ FireDetectClient::~FireDetectClient()
     delete GA_PSO;
     delete limit;
     delete target;
+    delete runParams;
 }

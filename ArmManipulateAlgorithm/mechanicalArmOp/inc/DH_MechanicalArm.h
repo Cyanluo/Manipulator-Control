@@ -76,11 +76,13 @@ public:
 		for(int i = 1; i <=JointN && s; i++)
 		{
 			temp = i2i_1TransferMatrix(i, s);
-		//	std::cout << i << "->" << i-1 << std::endl << temp << std::endl; 
+           // std::cout << i << "->" << i-1 << std::endl << temp << std::endl;
 			ret *= temp;
 		}
-		DHTable.col(3) -= this->RunParams;
-		return ret;
+
+        DHTable.col(3) -= this->RunParams;
+
+        return ret;
 	}
 
 	TransferMatrix forward()

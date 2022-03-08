@@ -14,6 +14,8 @@ namespace GeneticAlgorithm {
 
     MainProcess::MainProcess():w(0), c1(0), c2(0), isPSOEabled(false)
 	{
+        cout  << fixed << setprecision(3);
+
 		this->newChromosome = nullptr;
 		this->selectedChromosome = nullptr;
 		this->populations = nullptr;
@@ -48,7 +50,8 @@ namespace GeneticAlgorithm {
 		this->target = target;
 		this->limit = limit;
         this->init(numberOfPopulation);
-		
+        this->plotData = "";
+
 		for(int i=0; i<this->numberOfPopulation; i++)
 		{
 			this->populations[i]->setTarget(this->target);

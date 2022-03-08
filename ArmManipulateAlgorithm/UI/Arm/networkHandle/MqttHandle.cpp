@@ -16,6 +16,8 @@ void MqttHandle::init_topics()
     topics["pc_command"] = "/pc/command/1";
     topics["client_img"] = "/client/image/" + login_info.deviceId;
     topics["armControllerNode_dataChannel1"] = "/armControllerNode/dataChannel1/" + login_info.deviceId;
+    topics["pc_dataChannel1"] = "/pc/dataChannel1/1";
+    topics["busy"] = "/armControllerNode/busy/" + login_info.deviceId;
 }
 
 QString MqttHandle::topic(QString tp)
@@ -44,12 +46,24 @@ void MqttHandle::connect_mqtt()
 
     QTimer::singleShot(1000, this, [=](){
         client->subscribe(topics["pc_command"], 1);
+        client->subscribe(topics["pc_dataChannel1"], 1);
     });
 }
 
 void MqttHandle::onMQTT_Received( QMQTT::Message message)
 {
-    emit mqttReceive(message);
+    if(message.topic().startsWith(topics["pc_command"]))
+    {
+        emit mqttReceiveCommand(message);
+    }
+    else if(message.topic().startsWith(topics["pc_dataChannel1"]))
+    {
+        emit mqttReceiveData(message);
+    }
+    else
+    {
+        return;
+    }
 }
 
 void MqttHandle::onMQTT_Error(QMQTT::ClientError error)

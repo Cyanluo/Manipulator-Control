@@ -8,7 +8,8 @@ class ServerMonitor:
         self.pcClient = MqttDevMonitor()
 
     def pub(self):
-        self.pcClient.publish_data("/pc/command/1", b'\x01')
+        self.pcClient.publish_data("/pc/dataChannel1/1", "3;-20,-30,50,-10,0")
+        self.pcClient.publish_data("/pc/command/1", "0")
 
     def img_process(self):
         pass
@@ -18,7 +19,7 @@ def main():
     server = ServerMonitor()
 
     while True:
-        time.sleep(10)
+        time.sleep(20)
         server.pub()
 
 if __name__ == '__main__':

@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 import queue as Queue
 from base64 import b64encode, b64decode
-
+import matplotlib.pyplot as plt
 
 class MqttDevMonitor():
     def __init__(self, mxa_img_queue_buff=20):
@@ -26,6 +26,7 @@ class MqttDevMonitor():
 
         # test
         self.subscribe(client, "/armControllerNode/dataChannel1/1234")
+        self.subscribe(client, "/armControllerNode/busy/1234")
 
         client.on_message = self.on_manager_message
         client.loop_start()
@@ -62,12 +63,9 @@ class MqttDevMonitor():
 
     def on_manager_message(self, client, userdata, msg):
         if msg.topic.endswith("connected"):
-            #client_id = json.loads(msg.payload.decode())["clientid"]
-            # self.subscribe(client, self.cfg.get_mqtt_server_topic()["control_signal"][:-10] + client_id)
             logger.info(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
 
         elif msg.topic.endswith("disconnected"):
-            #client_id = json.loads(msg.payload.decode())["clientid"]
             logger.info(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
 
         elif msg.topic.startswith("/client/image/"):
@@ -90,6 +88,24 @@ class MqttDevMonitor():
 
         elif msg.topic.startswith("/armControllerNode/dataChannel1/"):
             print(msg.payload.decode())
+            data = msg.payload.decode()
+            l_data = data[:-1].split(';')
+            x = list()
+            y = list()
+            for each in l_data:
+                x.append(float((each.split(','))[0]))
+                y.append(float((each.split(','))[1]))
+            fig = plt.figure()
+            a1 = fig.add_subplot(111)
+            a1.set_ylim(0, 100)
+            a1.set_xlim(0, 100)
+            a1.plot(x, y)
+            a1.grid(True)
+            plt.show()
+
+        elif msg.topic.startswith("/armControllerNode/busy/"):
+            print(msg.payload.decode())
+
 
     def subscribe(self, client: mqtt_client, topic):
         client.subscribe(topic)

@@ -43,7 +43,8 @@ public:
     void Publish_data(QString topic, QString data);
 
 signals:
-    void mqttReceive(QMQTT::Message msg);
+    void mqttReceiveCommand(QMQTT::Message msg);
+    void mqttReceiveData(QMQTT::Message msg);
 };
 
 #endif // MQTTHANDLE_H
