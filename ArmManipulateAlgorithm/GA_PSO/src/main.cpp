@@ -51,29 +51,29 @@ int main()
 	
 	auto start0 = chrono::steady_clock::now();
 	
-	// mainProcess.run(
-	// 	5,	// 种群数量
-    //     25, // 种群大小
-    //     JOINTN, // 染色体长度
-	// 	limit, // 每个基因的限制
-    //     40, // 最大迭代次数
-    //     20, // 停止迭代适应度
-    //     18, // 每次迭代保留多少个上一代的高适应度个体
-    //     1.1, // 变异调整参数
-	// 	target // 寻优的目标
-    // );
-
 	mainProcess.run(
-		1,	// 种群数量
-        125, // 种群大小
+		5,	// 种群数量
+        25, // 种群大小
         JOINTN, // 染色体长度
 		limit, // 每个基因的限制
         100, // 最大迭代次数
         99.9, // 停止迭代适应度
-        25, // 每次迭代保留多少个上一代的高适应度个体
+        18, // 每次迭代保留多少个上一代的高适应度个体
         1.1, // 变异调整参数
 		target // 寻优的目标
     );
+
+	// mainProcess.run(
+	// 	1,	// 种群数量
+    //     125, // 种群大小
+    //     JOINTN, // 染色体长度
+	// 	limit, // 每个基因的限制
+    //     100, // 最大迭代次数
+    //     99.9, // 停止迭代适应度
+    //     25, // 每次迭代保留多少个上一代的高适应度个体
+    //     1.1, // 变异调整参数
+	// 	target // 寻优的目标
+    // );
 
 	cout << "target:" << endl << target << endl;
 	
@@ -82,7 +82,7 @@ int main()
 	int time =  elapsed0.count()*1000;
 	cout << "Timeeeeeeeeeeeeeeeeeeeeeeeee=============================solve func time: " << time << "ms" << endl;
 	
-	cout << mainProcess.getPlotData() << endl;
+	 //cout << mainProcess.getPlotData() << endl;
 
 	return 0;
 }

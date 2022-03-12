@@ -4,7 +4,7 @@
 #include <iomanip>
 
 using namespace std;
-const double PI = 3.1415926;
+//const double PI = 3.1415926;
 #define RADIAN(a) (PI/180*a) 
 const int JOINTN = 5;
 
@@ -28,7 +28,14 @@ int main()
 
 	TransferMatrix ret = arm.forward(runParams);
 
-	cout << JOINTN << "->" << "w" << endl << ret << endl;	
+	TransferMatrix p;
+	p << 0, 0, 1, 1,
+		 0, 1, 0, 1,
+		 -1, 0, 0, 0,
+		 0, 0, 0, 1;
+	Vector3f pos = arm.calcPosture(p);
+
+	cout << JOINTN << "->" << "w" << endl << pos << endl;	
 
 	return 0;
 }

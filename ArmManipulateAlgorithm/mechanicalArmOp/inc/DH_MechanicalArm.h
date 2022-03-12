@@ -7,12 +7,14 @@
 
 using namespace std;
 
+#define R2ANGEL(a) (180/PI*(a));
+
 template< int JointN, int DriverJointN >
 class DH_MechanicalArm:public JMechArm<JointN, DriverJointN>
 {
 	typedef Matrix<float, JointN, 4> MatrixN4;
 	MatrixN4 DHTable;
-
+	const double PI = 3.1415926;
 protected:
 	void loadRunParams()
 	{
@@ -88,6 +90,33 @@ public:
 	TransferMatrix forward()
 	{
 		return forward(this->RunParams);
+	}
+
+	Vector3f calcPosture(TransferMatrix& t)
+	{
+		Vector3f pos(3);
+		//b
+		pos(1) = R2ANGEL(atan2(-t(2, 0), sqrt(t(0, 0)*t(0, 0)+t(1, 0)*t(1, 0))));
+		
+		if( 90 == int(pos(1)) )
+		{
+			pos(2) = 0;
+			pos(0) = R2ANGEL(atan2(t(0, 1), t(1, 1)));
+		}
+		else if(-90 == int(pos(1)) )
+		{
+			pos(2) = 0;
+			pos(0) = -R2ANGEL(atan2(t(0, 1), t(1, 1)));
+		}
+		else
+		{
+			//a
+			pos(2) = R2ANGEL(atan2(t(1, 0)/cos(pos(1)), t(0, 0)/cos(pos(1))));
+			//y
+			pos(0) = R2ANGEL(atan2(t(2, 1)/cos(pos(1)), t(2, 2)/cos(pos(1))));
+		}
+		
+		return pos;
 	}
 
 	VectorXf backward(TransferMatrix& dst, bool update=false)

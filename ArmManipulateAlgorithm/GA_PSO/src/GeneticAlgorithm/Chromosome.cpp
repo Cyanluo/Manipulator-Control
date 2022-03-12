@@ -100,14 +100,32 @@ namespace GeneticAlgorithm {
 		}
 		cout << endl;
 
-		cout << this->arm->forward() << endl;
-		cout << "inaccuracy:" << sqrt((this->arm->forward() - this->target).squaredNorm()) << endl;
+		double postionInaccuracy = 0;
+		double postureInaccuracy = 0;
+		TransferMatrix ret = this->arm->forward();
+		calcInaccuracy(ret, target, postionInaccuracy, postureInaccuracy);
+		cout << ret << endl;
+		cout << "postionInaccuracy:" << postionInaccuracy << " " << "postureInaccuracy:" << postureInaccuracy << endl;
+		//cout << this->arm->forward() << endl;
+		//cout << "inaccuracy:" << sqrt((this->arm->forward() - this->target).squaredNorm()) << endl;
 	}
 
     unsigned long Chromosome::getLength() 
 	{
         return this->lengthOfData;
     }
+
+	void Chromosome::calcInaccuracy(TransferMatrix& l,
+						 TransferMatrix& target,
+						 double& postionInaccuracy,
+						 double& postureInaccuracy)
+	{
+		Vector3f pl = this->arm->calcPosture(l);
+		Vector3f pt = this->arm->calcPosture(target);
+
+		postureInaccuracy = sqrt((pl - pt).squaredNorm());
+		postionInaccuracy = sqrt((l.col(3).head(3) - target.col(3).head(3)).squaredNorm());
+	}
 
     long double Chromosome::getFitness(TransferMatrix& target) 
 	{
@@ -133,30 +151,35 @@ namespace GeneticAlgorithm {
 		ret = this->arm->forward(runParams);
 		
 		this->target = target;
-		ret = ret - this->target;
-		for(int i=0; i<3; i++)
-		{
-			for(int j=0; j<3; j++)
-			{
-				ret(i, j) = ret(i, j) * 9;
-			}
-		}
-		// cout <<  endl;
-		// cout << runParams << endl;
-		// cout << ret << endl;
-		// cout << this->target << endl;
-		
-		this->fitnessCached = sqrt(ret.squaredNorm());
-		// cout << this->fitnessCached << endl;
-		// cout << endl;
-		//cout << y << endl;
+
+		double postionInaccuracy = 0;
+		double postureInaccuracy = 0;
+
+		calcInaccuracy(ret, target, postionInaccuracy, postureInaccuracy);
+		// ret = ret - this->target;
+		// for(int i=0; i<3; i++)
+		// {
+		// 	for(int j=0; j<3; j++)
+		// 	{
+		// 		ret(i, j) = ret(i, j) * 9;
+		// 	}
+		// }
+		this->inaccuracy = postionInaccuracy + postureInaccuracy;
+		// this->fitnessCached = sqrt(ret.squaredNorm());
+		this->fitnessCached = 6*postionInaccuracy + 2*postureInaccuracy;
+		//cout << this->fitnessCached << endl;
         // y 最小等于0，我们求最大适应度需要反过来
-        this->fitnessCached = 1.0 / (this->fitnessCached + 0.01);
+        this->fitnessCached = 1.0 / (this->fitnessCached/40 + 0.01);
 
 		this->isFitnessCached = true;
 
         return this->fitnessCached;
     }
+
+	double Chromosome::getInaccuracy()
+	{
+		return this->inaccuracy;
+	}
 
 	void Chromosome::limiting(long double*& data, MatrixXd& limit)
 	{

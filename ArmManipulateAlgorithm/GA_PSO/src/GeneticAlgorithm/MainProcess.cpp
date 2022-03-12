@@ -14,7 +14,7 @@ namespace GeneticAlgorithm {
 
     MainProcess::MainProcess():w(0), c1(0), c2(0), isPSOEabled(false)
 	{
-        cout  << fixed << setprecision(3);
+        cout  << fixed << setprecision(6);
 
 		this->newChromosome = nullptr;
 		this->selectedChromosome = nullptr;
@@ -95,6 +95,8 @@ namespace GeneticAlgorithm {
             this->plotData += INT_TO_STRING(this->loopNow);
             this->plotData += ",";
             this->plotData += DOUBLE_TO_STRING(this->maxFitness, 2);
+			this->plotData += ",";
+			this->plotData += DOUBLE_TO_STRING(this->minInaccuracy, 4);
             this->plotData += ";";
         }
 		
@@ -138,6 +140,7 @@ namespace GeneticAlgorithm {
 			if(ret > this->maxFitness)
 			{
 				this->maxFitness = ret;
+				this->minInaccuracy = this->populations[i]->getMaxFitnessChromosome()->getInaccuracy();
 				indexPopulation = i;
 			}
 		}

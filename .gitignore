@@ -1710,3 +1710,5 @@ ArmManipulateAlgorithm/UI/PC/log/loginfo.log.2022-03-04
 ArmManipulateAlgorithm/UI/Arm/qmqtt
 ArmManipulateAlgorithm/UI/PC/log/loginfo.log.2022-03-06
 ArmManipulateAlgorithm/UI/PC/log/loginfo.log.2022-03-07
+StereoCalib/stereo_calib/bak/extrinsics.yml
+StereoCalib/stereo_calib/bak/intrinsics.yml

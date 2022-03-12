@@ -190,7 +190,7 @@ int main()
     initUndistortRectifyMap(cameraMatrixR, distCoeffR, Rr, Pr, imageSize, CV_16SC2, mapRx, mapRy);
 
     /*  读取图片    */
-    rgbImageL = imread("left_cor.bmp", CV_LOAD_IMAGE_COLOR);//CV_LOAD_IMAGE_COLOR
+    rgbImageL = imread("left_cor.bmp", CAP_PROP_FRAME_WIDTH);//CV_LOAD_IMAGE_COLOR
     rgbImageR = imread("right_cor.bmp", -1);
 
 

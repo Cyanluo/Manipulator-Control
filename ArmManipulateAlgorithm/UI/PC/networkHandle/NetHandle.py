@@ -92,15 +92,22 @@ class MqttDevMonitor():
             l_data = data[:-1].split(';')
             x = list()
             y = list()
+            inac = list()
             for each in l_data:
                 x.append(float((each.split(','))[0]))
                 y.append(float((each.split(','))[1]))
+                inac.append(float((each.split(','))[2]))
             fig = plt.figure()
-            a1 = fig.add_subplot(111)
+            a1 = fig.add_subplot(121)
             a1.set_ylim(0, 100)
             a1.set_xlim(0, 100)
             a1.plot(x, y)
             a1.grid(True)
+            a2 = a1 = fig.add_subplot(122)
+            a2.set_ylim(0, 1)
+            a2.set_xlim(0, 100)
+            a2.plot(x, inac)
+            a2.grid(True)
             plt.show()
 
         elif msg.topic.startswith("/armControllerNode/busy/"):

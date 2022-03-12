@@ -94,7 +94,12 @@ const int JOINTN = 5;
 				 MatrixXd& limit);
 		
 		void getData(long double*& dst);
+		double getInaccuracy();
     private:
+		void calcInaccuracy(TransferMatrix& l,
+						 TransferMatrix& target,
+						 double& postionInaccuracy,
+						 double& postureInaccuracy);
 		void limiting(long double*& data, MatrixXd& limit);
 		void limiting(long double*& data, long double min, long double max);
 		void arrayMUL(long double*& dst, long double*& l, long double c);
@@ -115,6 +120,7 @@ const int JOINTN = 5;
 
         // @var long double 缓存的上一次的适应度计算结果。需要判断isFitnessCached以确定确实缓存下来了。
         long double fitnessCached;
+		double inaccuracy;
 
 		JMechArm<5, 5>* arm;
 		TransferMatrix target;

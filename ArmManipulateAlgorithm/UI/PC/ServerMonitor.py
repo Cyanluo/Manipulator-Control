@@ -17,10 +17,10 @@ class ServerMonitor:
 
 def main():
     server = ServerMonitor()
-
+    time.sleep(2)
+    server.pub()
     while True:
-        time.sleep(20)
-        server.pub()
+        time.sleep(2)
 
 if __name__ == '__main__':
     main()

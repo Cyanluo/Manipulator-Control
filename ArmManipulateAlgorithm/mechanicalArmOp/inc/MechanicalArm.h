@@ -28,6 +28,8 @@ public:
 	virtual TransferMatrix forward(VectorXf runParams) = 0;
 
 	virtual TransferMatrix forward() = 0;
+
+	virtual Vector3f calcPosture(TransferMatrix& t) = 0;
 	
 	virtual VectorXf backward(TransferMatrix& dst, bool update=false) = 0;
 

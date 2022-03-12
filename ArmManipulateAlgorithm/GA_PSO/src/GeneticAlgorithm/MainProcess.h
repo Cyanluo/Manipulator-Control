@@ -61,6 +61,7 @@ namespace GeneticAlgorithm {
         unsigned long loopNow;
         // 保留每次迭代算出来的最大适应度
         long double maxFitness;
+		double minInaccuracy;
         // 迭代时存储选中的染色体or个体
         Chromosome*** selectedChromosome = nullptr;
         // 迭代时存储新生成的个体or染色体
