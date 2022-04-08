@@ -11,11 +11,17 @@ from base64 import b64encode, b64decode
 import matplotlib.pyplot as plt
 
 class MqttDevMonitor():
-    def __init__(self, mxa_img_queue_buff=20):
+    def __init__(self, mxa_img_queue_buff=5):
+        mqtt_client.Client._call_socket_register_write = lambda _self: None
+        mqtt_client.Client._call_socket_unregister_write = lambda _self, _sock=None: None
         self.m_client = dict()
         self.cfg = CfgInfo()
         self.managerClient = self.clientManageConnect()
         self.imageQueue = Queue.Queue(maxsize=mxa_img_queue_buff)
+        self.deepImageQueue = Queue.Queue(maxsize=mxa_img_queue_buff)
+        self.xyz = list()
+        self.receiveXYZ = False
+
 
     def clientManageConnect(self):
         client = self.connect("server-manager-client")
@@ -27,6 +33,8 @@ class MqttDevMonitor():
         # test
         self.subscribe(client, "/armControllerNode/dataChannel1/1234")
         self.subscribe(client, "/armControllerNode/busy/1234")
+        self.subscribe(client, "/armControllerNode/LRImage/1234")
+        self.subscribe(client, "/armControllerNode/deepMap/1234")
 
         client.on_message = self.on_manager_message
         client.loop_start()
@@ -68,7 +76,7 @@ class MqttDevMonitor():
         elif msg.topic.endswith("disconnected"):
             logger.info(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
 
-        elif msg.topic.startswith("/client/image/"):
+        elif msg.topic.startswith("/armControllerNode/LRImage/"):
             client_id = msg.topic.split('/')[-1]
 
             try:
@@ -86,50 +94,95 @@ class MqttDevMonitor():
                 logger.error(e)
                 logger.error("Fail to convert data to img !!!")
 
+        elif msg.topic.startswith("/armControllerNode/deepMap/"):
+            client_id = msg.topic.split('/')[-1]
+
+            try:
+                # print(msg.payload)
+                # img_original = b64decode(msg.payload)
+                # img_np = np.frombuffer(img_original, dtype=np.uint8)
+                # img = cv2.imdecode(img_np, cv2.IMREAD_UNCHANGED)
+
+                data = np.frombuffer(msg.payload, np.uint8)
+                img = cv2.imdecode(data, 1)  # 解码处理
+                self.deepImageQueue.put([client_id, img])
+                # cv2.imshow("", img)
+                # cv2.waitKey(0)
+            except Exception as e:
+                logger.error(e)
+                logger.error("Fail to convert data to img !!!")
+
         elif msg.topic.startswith("/armControllerNode/dataChannel1/"):
             print(msg.payload.decode())
-            data = msg.payload.decode()
-            l_data = data[:-1].split(';')
-            x = list()
-            y = list()
-            inac = list()
-            for each in l_data:
-                x.append(float((each.split(','))[0]))
-                y.append(float((each.split(','))[1]))
-                inac.append(float((each.split(','))[2]))
-            fig = plt.figure()
-            a1 = fig.add_subplot(121)
-            a1.set_ylim(0, 100)
-            a1.set_xlim(0, 100)
-            a1.plot(x, y)
-            a1.grid(True)
-            a2 = a1 = fig.add_subplot(122)
-            a2.set_ylim(0, 1)
-            a2.set_xlim(0, 100)
-            a2.plot(x, inac)
-            a2.grid(True)
-            plt.show()
+            q_data = msg.payload.decode()
+            (head, data) = q_data.split(":")
+
+            if head.startswith("plotData"):
+                l_data = data[:-1].split(';')
+                x = list()
+                y = list()
+                inac = list()
+                for each in l_data:
+                    x.append(float((each.split(','))[0]))
+                    y.append(float((each.split(','))[1]))
+                    inac.append(float((each.split(','))[2]))
+                fig = plt.figure()
+                a1 = fig.add_subplot(121)
+                a1.set_ylim(0, 100)
+                a1.set_xlim(0, 100)
+                a1.plot(x, y)
+                a1.grid(True)
+                a2 = a1 = fig.add_subplot(122)
+                a2.set_ylim(0, 1)
+                a2.set_xlim(0, 100)
+                a2.plot(x, inac)
+                a2.grid(True)
+                plt.show()
+
+            elif head.startswith("pointXYZ"):
+                points = data[:-1].split(',')
+                for each in points:
+                    self.xyz.append(float(each))
+                self.receiveXYZ = True
 
         elif msg.topic.startswith("/armControllerNode/busy/"):
             print(msg.payload.decode())
-
 
     def subscribe(self, client: mqtt_client, topic):
         client.subscribe(topic)
 
     def publish(self, client, topic, data):
-        result = client.publish(topic, data)
+        result = client.publish(topic, data, qos=0)
         # result: [0, 1]
         status = result[0]
 
     def publish_data(self, topic, data):
         self.publish(self.managerClient, topic, data)
 
-    def get_image(self):
-        return self.imageQueue.get()
+    def get_image(self, imgType):
+        if imgType == "LRImage":
+            return self.imageQueue.get()
+        elif imgType == "deepMap":
+            return self.deepImageQueue.get()
+        else:
+            pass
 
-    def has_img(self):
-        return not self.imageQueue.empty()
+    def has_img(self, imgType):
+        if imgType == "LRImage":
+            return not self.imageQueue.empty()
+        elif imgType == "deepMap":
+            return not self.deepImageQueue.empty()
+        else:
+            return False
+
+    def getXYZ(self):
+        if self.receiveXYZ:
+            self.receiveXYZ = False
+            self.xyzBak = self.xyz.copy()
+            self.xyz.clear()
+            return True, self.xyzBak
+        else:
+            return self.receiveXYZ, self.xyz
 
 
 def main():

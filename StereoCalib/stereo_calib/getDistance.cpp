@@ -16,8 +16,6 @@ Mat rectifyImageL, rectifyImageR;
 Rect validROIL;//图像校正之后，会对图像进行裁剪，这里的validROI就是指裁剪之后的区域
 Rect validROIR;
 
-// Mat mapLx, mapLy, mapRx, mapRy;     //映射表
-// Mat Rl, Rr, Pl, Pr, Q;            //校正旋转矩阵R，投影矩阵P 重投影矩阵Q
 Mat xyz;              //三维坐标
 Mat R, T, R1, P1, R2, P2, Q;
 
