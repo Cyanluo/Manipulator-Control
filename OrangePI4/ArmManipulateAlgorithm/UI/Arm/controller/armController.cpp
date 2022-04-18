@@ -144,5 +144,5 @@ void ArmController::resetPostion()
 
     actionExe(ids, runParams, time);
 
-    openClaw();
+    //openClaw();
 }

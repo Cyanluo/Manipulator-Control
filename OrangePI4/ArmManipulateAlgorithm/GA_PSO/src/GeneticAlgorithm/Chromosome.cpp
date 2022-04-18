@@ -19,6 +19,12 @@ namespace GeneticAlgorithm {
                 PI,     105,   0,  0,
                 0,     98,  0,   0,
                 0,     150,   0,  0;
+//        dh << -PI/2,   0,   0,   0,
+//               PI/2,   0,  0,   PI/2,
+//                PI,     105,   0,  0,
+//                0,     98,     0,   0,
+//              -PI/2,     20,   40,  0,
+//                PI/2,    110,   0,  0;
 		
 		TransferMatrix wf;
 
@@ -107,7 +113,7 @@ namespace GeneticAlgorithm {
 		cout << ret << endl;
 		cout << "postionInaccuracy:" << postionInaccuracy << " " << "postureInaccuracy:" << postureInaccuracy << endl;
 		//cout << this->arm->forward() << endl;
-		cout << "inaccuracy:" << sqrt((this->arm->forward() - this->target).squaredNorm()) << endl;
+        cout << "inaccuracy:" << this->inaccuracy << endl;
 	}
 
     unsigned long Chromosome::getLength() 
@@ -156,16 +162,17 @@ namespace GeneticAlgorithm {
 		double postureInaccuracy = 0;
 
         calcInaccuracy(ret, target, postionInaccuracy, postureInaccuracy);
-        //ret = ret - this->target;
-//		for(int i=0; i<3; i++)
-//		{
-//			for(int j=0; j<3; j++)
-//			{
-//				ret(i, j) = ret(i, j) * 9;
-//			}
-//		}
+//        ret = ret - this->target;
+//        for(int i=0; i<3; i++)
+//        {
+//            for(int j=0; j<3; j++)
+//            {
+//                ret(i, j) = ret(i, j) * 10;
+//            }
+//        }
         this->inaccuracy = postionInaccuracy;
         //this->fitnessCached = sqrt(ret.squaredNorm());
+        //this->inaccuracy = sqrt((this->arm->forward() - this->target).squaredNorm());
         this->fitnessCached = postionInaccuracy;
 		//cout << this->fitnessCached << endl;
         // y 最小等于0，我们求最大适应度需要反过来
@@ -267,11 +274,12 @@ namespace GeneticAlgorithm {
 		for (unsigned long i = 0; i < this->lengthOfData; i++) 
 		{
             newData[i] = (this->dataArray[i] + another->getGene(i)) / 2.0;
-			newVelocity[i] = (this->velocity[i] + another->getVelocity(i)) / 2.0;
-		}
+            newVelocity[i] = (this->velocity[i] + another->getVelocity(i)) / 2.0;
+            //newVelocity[i] = this->velocity[i];
+        }
 
 		limiting(newData, limit);
-		limiting(newVelocity, limit(this->lengthOfData, 0), limit(this->lengthOfData, 1));
+        limiting(newVelocity, limit(this->lengthOfData, 0), limit(this->lengthOfData, 1));
 
         Chromosome* newChromosome = ChromosomeFactory().buildFromArray(newData, newVelocity, this->lengthOfData);
         

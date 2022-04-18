@@ -7,9 +7,6 @@
 
 namespace GeneticAlgorithm {
 
-    /**
-     * 算法主流程
-     */
     class MainProcess {
 
     public:
@@ -50,58 +47,37 @@ namespace GeneticAlgorithm {
         void disablePSO();
     private:
 		unsigned long numberOfPopulation;
-        // 染色体or个体的数量
         unsigned long numberOfChromosome;
-        // 染色体的长度
         unsigned long lengthOfChromosome;
 
 		MatrixXd limit;
-        // 每次迭代从上一代保留多少个个体
         unsigned long keep;
-        // 每次迭代上上一道销毁多少个个体，这个根据numberOfChromosome和lengthOfChromosome算出来的
         unsigned long kill;
-        // 运行过程中保留当前迭代属于第几次迭代
         unsigned long loopNow;
-        // 保留每次迭代算出来的最大适应度
         long double maxFitness;
 		double minInaccuracy;
         VectorXf resultRunParams;
-        // 迭代时存储选中的染色体or个体
         Chromosome*** selectedChromosome = nullptr;
-        // 迭代时存储新生成的个体or染色体
         Chromosome*** newChromosome = nullptr;
-        // 变异概率
         long double r;
 		long double pm;
-        // 存储一个Population实例
         Population** populations = nullptr;
-        // 是否开启调试
         bool debug = false;
 		TransferMatrix target;
-        // 私有，初始化
         void init(unsigned long numberOfPopulation);
-        // 私有，对种群中个体按照适应度大小排序
         void sort();
-        // 私有，选择个体
         void select();
-        // 私有，交叉运算
         void crossover();
-        // 私有，变异
         void mutation();
-        // 私有，新个体替换上一代中不需要保留的个体
         void generated();
 		void PSO();
-        // 私有，把上一次run中申请的内存释放
         void freeMemory();
 
         string plotData;
 
 		bool isPSOEabled;
-		// pos参数:w 惯性权重
 		double w;
-		// pos参数:c1 表示粒子下一步动作来源于自己种群经验部分所占的权重
 		double c1;
-		// pos参数:c2 表示粒子下一步动作来源于其它种群粒子经验部分所占的权重
 		double c2;
     };
 

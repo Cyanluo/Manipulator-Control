@@ -6,11 +6,11 @@
 #define INT_TO_STRING(n) ( ((ostringstream&)(ostringstream() << n)).str() )
 
 FireDetectClient::FireDetectClient(QObject *parent)
-    : QObject(parent)
+    : QObject(parent),algorithmType(0),mode(NormalRun)
 {
     Login_config log_info =
     {
-        QHostAddress("192.168.39.131"),
+        QHostAddress("192.168.119.131"),
         "public",
         1883,
         "1234",
@@ -53,6 +53,12 @@ void FireDetectClient::initGAPSO()
             PI,     105,   0,  0,
             0,     98,  0,   0,
             0,     150,   0,  0;
+//    dh << -PI/2,   0,   0,   0,
+//           PI/2,   0,  0,   PI/2,
+//            PI,     105,   0,  0,
+//            0,     98,     0,   0,
+//          -PI/2,     20,   40,  0,
+//            PI/2,    110,   0,  0;
 
     TransferMatrix wf;
 
@@ -64,6 +70,13 @@ void FireDetectClient::initGAPSO()
             -90, 90,
             0, 0,
             -9, 9; // 粒子群速度限制
+//    (*limit) << -90, 90,
+//            -90, 90,
+//            -90, 90,
+//            -90, 90,
+//            -90, 90,
+//            -90, 90,
+//            -9, 9; // 粒子群速度限制
 
     GA_PSO->setDebug(true);
 
@@ -161,6 +174,12 @@ void FireDetectClient::mqttDataDispose(QMQTT::Message message)
             case ReceivePoints:
             {
                 loadPoints( const_cast<QString&>(qdataList.at(1)) );
+                break;
+            }
+            case SettingData:
+            {
+                setting( const_cast<QString&>(qdataList.at(1)) );
+                break;
             }
 
             default: break;
@@ -210,6 +229,7 @@ void FireDetectClient::runGAPSO(TransferMatrix* ltarget, int type)
                 1.1, // 变异调整参数
                 *ltarget // 寻优的目标
             );
+            cout << "GA_PSO" << endl;
             break;
         }
         case 1:
@@ -227,7 +247,9 @@ void FireDetectClient::runGAPSO(TransferMatrix* ltarget, int type)
                     1.1, // 变异调整参数
                     *ltarget // 寻优的目标
                 );
+            cout << "GA" << endl;
             break;
+
         }
         case 2:
         {
@@ -248,7 +270,7 @@ void FireDetectClient::runGAPSO(TransferMatrix* ltarget, int type)
                 1.1, // 变异调整参数
                 *ltarget // 寻优的目标
             );
-
+            cout << "PSO" << endl;
             break;
         }
 
@@ -266,24 +288,26 @@ void FireDetectClient::runArm()
     m_mqttClient->Publish_data(m_mqttClient->topic("armControllerNode_dataChannel1"),
                                QString::fromStdString(plotData));
 
-
-    VectorXd ids(JOINTN, 1), times(JOINTN, 1);
-    VectorXf rp(JOINTN, 1);
-    ids << 0, 1, 2, 3, 4;
-    times << 3000, 3000, 3000, 3000, 3000;
-    for(int i=0; i<JOINTN; i++)
+    if(mode == NormalRun)
     {
-        rp(i) = ( (*runParams)(i)*(180/PI) );
-        cout << rp(i) << " ";
+        VectorXd ids(JOINTN, 1), times(JOINTN, 1);
+        VectorXf rp(JOINTN, 1);
+        ids << 0, 1, 2, 3, 4;
+        times << 3000, 3000, 3000, 3000, 3000;
+        for(int i=0; i<JOINTN; i++)
+        {
+            rp(i) = ( (*runParams)(i)*(180/PI) );
+            cout << rp(i) << " ";
+        }
+        cout << endl;
+
+        armSerialController->openClaw();
+        armSerialController->actionExe(ids, rp, times);
+        armSerialController->closeClaw();
+        armSerialController->resetPostion();
+
+        armSerialController->run(1);
     }
-    cout << endl;
-
-    armSerialController->openClaw();
-    armSerialController->actionExe(ids, rp, times);
-    armSerialController->closeClaw();
-    //armSerialController->resetPostion();
-
-    armSerialController->run(1);
 }
 
 void FireDetectClient::run(int eventid)
@@ -297,8 +321,8 @@ void FireDetectClient::run(int eventid)
                 resetStatus(ActionExecute); // cup ack
                 setEStatus(ActionExecute); // runing
 
-                (*target) = (*arm).forward(*runParams);
-                runGAPSO(target);
+//                (*target) = (*arm).forward(*runParams);
+//                runGAPSO(target, this->algorithmType);
 
                 runArm();
 
@@ -315,9 +339,25 @@ void FireDetectClient::run(int eventid)
                 resetStatus(ReachTarget); // cup ack
                 setEStatus(ReachTarget); // runing
 
-                runGAPSO(target, 0);
-                (*runParams) = GA_PSO->getResultRunParams();
-                runArm();
+                if(mode == NormalRun)
+                {
+                    runGAPSO(target, this->algorithmType);
+                    (*runParams) = GA_PSO->getResultRunParams();
+                    runArm();
+                }
+                else if(mode == TestAlgorithm)
+                {
+                    for(int i=0; i<3; i++)
+                    {
+                        runGAPSO(target, i);
+                        (*runParams) = GA_PSO->getResultRunParams();
+                        runArm();
+                    }
+                }
+                else
+                {
+
+                }
 
                 resetStatus(TargetBufferFull);
                 resetEStatus(ReachTarget); // finish
@@ -432,6 +472,43 @@ void FireDetectClient::loadPoints(QString& points)
                                    QString::fromStdString(data));
 
         resetStatus(PointsBufferFull);
+    }
+}
+
+// setType:data1,data2
+void FireDetectClient::setting(QString& settingData)
+{
+    if(!isSBFSet(SettingDataBufferFull))
+    {
+        setStatus(SettingDataBufferFull);
+
+        QStringList qdataList = settingData.split(':', QString::SkipEmptyParts);
+        QString setType = qdataList.at(0);
+
+        if(setType.startsWith("algorithmType"))
+        {
+            double temp = 0;
+            TO_NUMBER(const_cast<QString&>(qdataList.at(1)).toStdString(), temp);
+            cout << "temp:" << temp << endl;
+            this->algorithmType = temp;
+
+            deviceBusy("Setting:SUCCESS:algorithmType");
+        }
+        else if(setType.startsWith("mode"))
+        {
+            double temp = 0;
+            TO_NUMBER(const_cast<QString&>(qdataList.at(1)).toStdString(), temp);
+
+            this->mode = temp;
+
+            deviceBusy("Setting:SUCCESS:mode");
+        }
+        else
+        {
+            deviceBusy("Setting:ERROR:wrong setType!!!");
+        }
+
+        resetStatus(SettingDataBufferFull);
     }
 }
 

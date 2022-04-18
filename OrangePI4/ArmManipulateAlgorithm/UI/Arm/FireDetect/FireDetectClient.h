@@ -31,16 +31,26 @@ class FireDetectClient : public QObject
 
     enum STATUS
     {
+        NOP,
         ActionExecute,
         ReachTarget,
         AlgorithmDebugDataBufferFull,
         RunParamBufferFull,
         TargetBufferFull,
         PointsBufferFull,
+        SettingDataBufferFull,
         STATUSNUMBER,
         ReceiveRunParams,
         ReceiveTarget,
-        ReceivePoints
+        ReceivePoints,
+        SettingData
+    };
+
+    enum MODE
+    {
+        NOP_M,
+        TestAlgorithm,
+        NormalRun
     };
 
     SmartPointer<QByteArray> statusBuffer;
@@ -57,6 +67,8 @@ class FireDetectClient : public QObject
     VectorXf* runParams;
     Point cleft;
     Point cright;
+    int algorithmType;
+    int mode;
     JMechArm<JOINTN, JOINTN>* arm;
     ArmController* armSerialController;
 
@@ -64,10 +76,12 @@ class FireDetectClient : public QObject
 
     void actionExecute();
     void reachTarget();
+
     void loadRunParams(QString& runParams);
     void deviceBusy(QString msg);
     void loadTarget(QString& target);
     void loadPoints(QString& points);
+    void setting(QString& settingData);
 
     void eventLoop(int eventid = -1);
     void run(int eventid);

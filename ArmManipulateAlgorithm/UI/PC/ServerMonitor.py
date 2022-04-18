@@ -1,13 +1,16 @@
 from networkHandle.NetHandle import MqttDevMonitor
-
-import time
 import cv2 as cv
+from CONST import ARM_STATUS, MODE
+from PyQt5.QtCore import QCoreApplication, QObject
+import sys
 
-class ServerMonitor:
+class ServerMonitor(QObject):
     def __init__(self):
+        super(ServerMonitor, self).__init__(parent=None)
         self.pcClient = MqttDevMonitor()
         cv.namedWindow('LRImage')
         cv.setMouseCallback('LRImage', self.selectObject)
+        self.pcClient.xyzReady.connect(self.reachDist)
         self.cleft = None
         self.cright = None
         self.triF = False
@@ -16,30 +19,29 @@ class ServerMonitor:
         self.count = 0
         self.img = None
 
-    def pub(self):
-        self.pcClient.publish_data("/pc/dataChannel1/1", "7;0,0,0,0,0,0")
-        self.pcClient.publish_data("/pc/command/1", "0")
-        # self.pcClient.publish_data("/pc/dataChannel1/1", "8;0,1,0,294,1,0,0,-81,0,0,-1,10,0,0,0,1")
-        # self.pcClient.publish_data("/pc/command/1", "1")
+    def exeCMD(self, cmdID):
+        self.pcClient.publish_data("/pc/command/1", str(int(cmdID)))
 
-    def reachDist(self):
-        pointData = str(self.cleft[0]) + "," + str(self.cleft[1]) + "," + str(self.cright[0]) + "," + str(self.cright[1])
-        self.pcClient.publish_data("/pc/dataChannel1/1", "9;" + pointData)
-        print(pointData)
-        flag, xyz = self.pcClient.getXYZ()
-        repeat = 0
-        while not flag:
-            flag, xyz = self.pcClient.getXYZ()
-            repeat += 1
-            time.sleep(1)
-            if repeat > 2:
-                print("send error!!!")
-                return
+    def sendData(self, datypeID, data):
+        self.pcClient.publish_data("/pc/dataChannel1/1", str(int(datypeID))+";"+data)
 
-        target = "8;0,1,0," + str(-xyz[2]+40) + ",1,0,0, " + str(xyz[1]+20) + " ,0,0,-1," + str(-xyz[0]+240) + ",0,0,0,1"
+    def setting(self, setType, data):
+        if setType == "mode":
+            self.pcClient.setMode(data)
+            self.sendData(ARM_STATUS.SettingData, setType + ":" + str(int(data)))
+        else:
+            self.sendData(ARM_STATUS.SettingData, setType+":"+data)
+
+    def reachDist(self, xyz):
+        target = "0,0.98,0.19," + str(-xyz[2] + 40) + ",1,0,1, " + str(xyz[1]+5) + " ,0,0.19,-0.98," + str(
+            -xyz[0] + 240) + ",0,0,0,1"
         print(target)
-        self.pcClient.publish_data("/pc/dataChannel1/1", target)
-        self.pcClient.publish_data("/pc/command/1", "1")
+        self.sendData(ARM_STATUS.ReceiveTarget, target)
+        self.exeCMD(ARM_STATUS.ReachTarget)
+
+    def sendPoints(self):
+        pointData = str(self.cleft[0]) + "," + str(self.cleft[1]) + "," + str(self.cright[0]) + "," + str(self.cright[1])
+        self.sendData(ARM_STATUS.ReceivePoints, pointData)
 
     def selectObject(self, event, x, y, flags, param):
         if event == cv.EVENT_LBUTTONDOWN:
@@ -77,21 +79,23 @@ class ServerMonitor:
 
                 if self.triF:
                     self.triF = False
-                    self.reachDist()
+                    self.setting("algorithmType", str(0))
+                    self.sendPoints()
 
                 if self.reset:
                     self.reset = False
-                    self.pcClient.publish_data("/pc/dataChannel1/1", "7;0,0,0,0,0,0")
-                    self.pcClient.publish_data("/pc/command/1", "0")
+                    self.sendData(ARM_STATUS.ReceiveRunParams, "0,0,0,0,0,0")
+                    self.exeCMD(ARM_STATUS.ActionExecute)
             else:
-                cv.waitKey(200)
+                cv.waitKey(500)
 
 def main():
+    app = QCoreApplication(sys.argv)
     server = ServerMonitor()
+    server.setting("mode", MODE.TestAlgorithm)
+    # 0:ga_pso 1:ga 2:pso
     server.img_process()
-
-    while True:
-        cv.waitKey(500)
+    sys.exit(app.exec_())
 
 if __name__ == '__main__':
     main()
