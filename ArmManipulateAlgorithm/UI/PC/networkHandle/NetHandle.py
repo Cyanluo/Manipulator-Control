@@ -113,10 +113,11 @@ class MqttDevMonitor(QObject):
                 logger.error("Fail to convert data to img !!!")
 
         elif msg.topic.startswith("/armControllerNode/dataChannel1/"):
-            print(msg.payload.decode())
             q_data = msg.payload.decode()
             (head, data) = q_data.split(":")
-
+            print("PlotData:")
+            print(data)
+            print("------------")
             if head.startswith("plotData"):
                 if self.mode == MODE.TestAlgorithm:
                     param = self.myPlot.decodeStr(data)
@@ -135,7 +136,7 @@ class MqttDevMonitor(QObject):
                     xyz.append(float(each))
 
                 self.xyzReady.emit(xyz)
-                print("XYZ", xyz)
+                #print("XYZ", xyz)
 
         elif msg.topic.startswith("/armControllerNode/busy/"):
             print(msg.payload.decode())

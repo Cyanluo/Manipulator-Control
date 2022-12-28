@@ -2,7 +2,13 @@ from networkHandle.NetHandle import MqttDevMonitor
 import cv2 as cv
 from CONST import ARM_STATUS, MODE
 from PyQt5.QtCore import QCoreApplication, QObject
+from PyQt5.QtWidgets import QApplication, QWidget
 import sys
+
+import gi
+from gi import require_version
+require_version('Gtk', '2.0')
+from gi.repository import Gtk
 
 class ServerMonitor(QObject):
     def __init__(self):
@@ -33,9 +39,10 @@ class ServerMonitor(QObject):
             self.sendData(ARM_STATUS.SettingData, setType+":"+data)
 
     def reachDist(self, xyz):
-        target = "0,0.98,0.19," + str(-xyz[2] + 40) + ",1,0,1, " + str(xyz[1]+5) + " ,0,0.19,-0.98," + str(
+        target = "0,0.98,0.19," + str(-xyz[2] + 55) + ",1,0,1, " + str(xyz[1]+5) + " ,0,0.19,-0.98," + str(
             -xyz[0] + 240) + ",0,0,0,1"
-        print(target)
+        print("XYZ:", (-xyz[2] + 45, xyz[1], -xyz[0] + 225))
+        print("-----------")
         self.sendData(ARM_STATUS.ReceiveTarget, target)
         self.exeCMD(ARM_STATUS.ReachTarget)
 
@@ -90,9 +97,9 @@ class ServerMonitor(QObject):
                 cv.waitKey(500)
 
 def main():
-    app = QCoreApplication(sys.argv)
+    app = QApplication(sys.argv)
     server = ServerMonitor()
-    server.setting("mode", MODE.TestAlgorithm)
+    server.setting("mode", MODE.NormalRun)
     # 0:ga_pso 1:ga 2:pso
     server.img_process()
     sys.exit(app.exec_())

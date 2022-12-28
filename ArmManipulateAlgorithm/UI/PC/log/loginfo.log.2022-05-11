@@ -1,0 +1,13 @@
+2022-05-11 19:25:03,725 /media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/UI/PC/networkHandle/NetHandle.py(61): INFO server-manager-client: Connected to MQTT Broker!
+2022-05-11 19:26:12,061 /media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/UI/PC/networkHandle/NetHandle.py(61): INFO server-manager-client: Connected to MQTT Broker!
+2022-05-11 19:27:50,726 /media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/UI/PC/networkHandle/NetHandle.py(88): INFO Received `{"username":"admin","ts":1652297260164,"sockport":1883,"proto_ver":3,"proto_name":"MQIsdp","keepalive":120,"ipaddress":"192.168.86.27","expiry_interval":7200,"connected_at":1652297260164,"connack":0,"clientid":"1234","clean_start":false}` from `$SYS/brokers/emqx@127.0.0.1/clients/1234/connected` topic
+2022-05-11 19:31:50,582 /media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/UI/PC/networkHandle/NetHandle.py(61): INFO server-manager-client: Connected to MQTT Broker!
+2022-05-11 19:32:36,044 /media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/UI/PC/networkHandle/NetHandle.py(61): INFO server-manager-client: Connected to MQTT Broker!
+2022-05-11 19:35:09,170 /media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/UI/PC/networkHandle/NetHandle.py(61): INFO server-manager-client: Connected to MQTT Broker!
+2022-05-11 19:39:06,168 /media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/UI/PC/networkHandle/NetHandle.py(61): INFO server-manager-client: Connected to MQTT Broker!
+2022-05-11 19:52:12,934 /media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/UI/PC/networkHandle/NetHandle.py(61): INFO server-manager-client: Connected to MQTT Broker!
+2022-05-11 20:09:46,730 /media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/UI/PC/networkHandle/NetHandle.py(61): INFO server-manager-client: Connected to MQTT Broker!
+2022-05-11 20:10:46,522 /media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/UI/PC/networkHandle/NetHandle.py(61): INFO server-manager-client: Connected to MQTT Broker!
+2022-05-11 20:12:33,290 /media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/UI/PC/networkHandle/NetHandle.py(61): INFO server-manager-client: Connected to MQTT Broker!
+2022-05-11 20:35:50,595 /media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/UI/PC/networkHandle/NetHandle.py(61): INFO server-manager-client: Connected to MQTT Broker!
+2022-05-11 21:00:03,333 /media/cyan/文档/workPlace/project/LRX/smartPicker/SRC/ArmManipulateAlgorithm/UI/PC/networkHandle/NetHandle.py(61): INFO server-manager-client: Connected to MQTT Broker!
