@@ -23,8 +23,8 @@ bool binocularCamera::loadCaParams()
 {
 	bool ret = true;
 	
-    string path_intrinsics("../binocularCamera/intrinsics.yml"),
-    path_extrinsics("../binocularCamera/extrinsics.yml");
+    string path_intrinsics("../../binocularCamera/intrinsics.yml"),
+    path_extrinsics("../../binocularCamera/extrinsics.yml");
 
 	FileStorage fs(path_intrinsics, FileStorage::READ);
 	if (!fs.isOpened()) 

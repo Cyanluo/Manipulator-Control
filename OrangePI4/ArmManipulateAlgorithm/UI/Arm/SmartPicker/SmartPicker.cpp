@@ -1,16 +1,16 @@
-#include "FireDetectClient.h"
+#include "SmartPicker.h"
 #include <QDebug>
 #include <sstream>
 #include <iomanip>
 
 #define INT_TO_STRING(n) ( ((ostringstream&)(ostringstream() << n)).str() )
 
-FireDetectClient::FireDetectClient(QObject *parent)
+SmartPicker::SmartPicker(QObject *parent)
     : QObject(parent),algorithmType(0),mode(NormalRun)
 {
     Login_config log_info =
     {
-        QHostAddress("192.168.119.131"),
+        QHostAddress("192.168.0.106"),
         "public",
         1883,
         "1234",
@@ -19,8 +19,8 @@ FireDetectClient::FireDetectClient(QObject *parent)
 
     m_mqttClient = new MqttHandle(log_info);
 
-    connect(m_mqttClient.get(), &MqttHandle::mqttReceiveCommand, this, &FireDetectClient::mqttCommendDispose);
-    connect(m_mqttClient.get(), &MqttHandle::mqttReceiveData, this, &FireDetectClient::mqttDataDispose);
+    connect(m_mqttClient.get(), &MqttHandle::mqttReceiveCommand, this, &SmartPicker::mqttCommendDispose);
+    connect(m_mqttClient.get(), &MqttHandle::mqttReceiveData, this, &SmartPicker::mqttDataDispose);
 
     executeStatusBuffer = new QByteArray(STATUSNUMBER, 0);
     statusBuffer = new QByteArray(STATUSNUMBER, 0);
@@ -30,17 +30,17 @@ FireDetectClient::FireDetectClient(QObject *parent)
     initGAPSO();
 
     eventLoopTimer = new QTimer(this);
-    connect(eventLoopTimer, &QTimer::timeout, this, &FireDetectClient::mqttEventLoop);
+    connect(eventLoopTimer, &QTimer::timeout, this, &SmartPicker::mqttEventLoop);
     eventLoopTimer->start(200);
 
     m_capture.open(10);
 
     imageTimer = new QTimer(this);
-    connect(imageTimer, &QTimer::timeout, this, &FireDetectClient::send_img);
+    connect(imageTimer, &QTimer::timeout, this, &SmartPicker::send_img);
     imageTimer->start(200);
 }
 
-void FireDetectClient::initGAPSO()
+void SmartPicker::initGAPSO()
 {
     GA_PSO = new MainProcess();
     limit = new MatrixXd(JOINTN+1, 2);
@@ -78,7 +78,7 @@ void FireDetectClient::initGAPSO()
 //            -90, 90,
 //            -9, 9; // 粒子群速度限制
 
-    GA_PSO->setDebug(true);
+    GA_PSO->setDebug(false);
 
     GA_PSO->setPSO(
             0.2, // w 惯性权重
@@ -87,37 +87,37 @@ void FireDetectClient::initGAPSO()
         );
 }
 
-bool FireDetectClient::isSBFSet(int statusid)
+bool SmartPicker::isSBFSet(int statusid)
 {
     return (*statusBuffer).at(statusid);
 }
 
-bool FireDetectClient::isESBFSet(int statusid)
+bool SmartPicker::isESBFSet(int statusid)
 {
     return (*executeStatusBuffer).at(statusid);
 }
 
-void FireDetectClient::setStatus(int statusid)
+void SmartPicker::setStatus(int statusid)
 {
     (*statusBuffer)[statusid] = 1;
 }
 
-void FireDetectClient::resetStatus(int statusid)
+void SmartPicker::resetStatus(int statusid)
 {
     (*statusBuffer)[statusid] = 0;
 }
 
-void FireDetectClient::setEStatus(int statusid)
+void SmartPicker::setEStatus(int statusid)
 {
     (*executeStatusBuffer)[statusid] = 1;
 }
 
-void FireDetectClient::resetEStatus(int statusid)
+void SmartPicker::resetEStatus(int statusid)
 {
     (*executeStatusBuffer)[statusid] = 0;
 }
 
-void FireDetectClient::mqttCommendDispose(QMQTT::Message message)
+void SmartPicker::mqttCommendDispose(QMQTT::Message message)
 {
     if( message.topic().startsWith(m_mqttClient->topic("pc_command")) )
     {
@@ -145,40 +145,38 @@ void FireDetectClient::mqttCommendDispose(QMQTT::Message message)
 }
 
 //id;data
-void FireDetectClient::mqttDataDispose(QMQTT::Message message)
+void SmartPicker::mqttDataDispose(QMQTT::Message message)
 {
     if( message.topic().startsWith(m_mqttClient->topic("pc_dataChannel1")) )
     {
         string data = message.payload().toStdString();
-        QString qdata = QString::fromStdString(data);
+        json j_data = json::parse(data);
 
-        QStringList qdataList = qdata.split(';', QString::SkipEmptyParts);
-        QString str_dtype = qdataList.at(0);
+        cout << std::setw(4) << j_data << "\n\n";
 
         int dtype = -1;
-        TO_NUMBER(str_dtype.toStdString(), dtype);
+        dtype = j_data["id"];
 
-        cout << ReceiveTarget << endl;
         switch(dtype)
         {
             case ReceiveRunParams:
             {
-                loadRunParams( const_cast<QString&>(qdataList.at(1)) );
+                loadRunParams(j_data);
                 break;
             }
             case ReceiveTarget:
             {
-                loadTarget( const_cast<QString&>(qdataList.at(1)) );
+                loadTarget(j_data);
                 break;
             }
             case ReceivePoints:
             {
-                loadPoints( const_cast<QString&>(qdataList.at(1)) );
+                loadPoints(j_data);
                 break;
             }
             case SettingData:
             {
-                setting( const_cast<QString&>(qdataList.at(1)) );
+                setting(j_data);
                 break;
             }
 
@@ -187,7 +185,7 @@ void FireDetectClient::mqttDataDispose(QMQTT::Message message)
     }
 }
 
-void FireDetectClient::mqttEventLoop()
+void SmartPicker::mqttEventLoop()
 {
     int id = -1;
 
@@ -206,7 +204,7 @@ void FireDetectClient::mqttEventLoop()
     }
 }
 
-void FireDetectClient::runGAPSO(TransferMatrix* ltarget, int type)
+void SmartPicker::runGAPSO(TransferMatrix* ltarget, int type)
 {
     switch(type)
     {
@@ -223,7 +221,7 @@ void FireDetectClient::runGAPSO(TransferMatrix* ltarget, int type)
                 25, // 种群大小
                 JOINTN, // 染色体长度
                 *limit, // 每个基因的限制
-                100, // 最大迭代次数
+                50, // 最大迭代次数
                 99, // 停止迭代适应度
                 10, // 每次迭代保留多少个上一代的高适应度个体
                 1.1, // 变异调整参数
@@ -278,7 +276,7 @@ void FireDetectClient::runGAPSO(TransferMatrix* ltarget, int type)
     }
 }
 
-void FireDetectClient::runArm()
+void SmartPicker::runArm()
 {
     string plotData = GA_PSO->getPlotData();
 
@@ -310,7 +308,7 @@ void FireDetectClient::runArm()
     }
 }
 
-void FireDetectClient::run(int eventid)
+void SmartPicker::run(int eventid)
 {
     switch (eventid)
     {
@@ -369,7 +367,7 @@ void FireDetectClient::run(int eventid)
     }
 }
 
-void FireDetectClient::actionExecute()
+void SmartPicker::actionExecute()
 {
     if( (!(isESBFSet(ActionExecute))) && (!(isSBFSet(ActionExecute))) )
     {
@@ -381,7 +379,7 @@ void FireDetectClient::actionExecute()
     }
 }
 
-void FireDetectClient::reachTarget()
+void SmartPicker::reachTarget()
 {
     if( (!(isESBFSet(ReachTarget))) && (!(isSBFSet(ReachTarget))) )
     {
@@ -393,68 +391,53 @@ void FireDetectClient::reachTarget()
     }
 }
 
-void FireDetectClient::loadRunParams(QString& runParams)
+void SmartPicker::loadRunParams(json& runParams)
 {
     if(!isSBFSet(RunParamBufferFull))
     {               
         setStatus(RunParamBufferFull);
 
-        QStringList qdataList = runParams.split(',', QString::SkipEmptyParts);
-
-        double temp = 0;
+        vector<float> j_runParams = runParams["runParams"];
 
         for(int i=0; i<JOINTN; i++)
         {
-            TO_NUMBER(const_cast<QString&>(qdataList.at(i)).toStdString(), temp);
-            (*(this->runParams))[i] = RADIAN(temp);
+            (*(this->runParams))[i] = RADIAN(j_runParams[i]);
         }
     }
 }
 
-void FireDetectClient::loadTarget(QString& target)
+void SmartPicker::loadTarget(json& target)
 {
     if(!isSBFSet(TargetBufferFull))
     {
         setStatus(TargetBufferFull);
 
-        QStringList qdataList = target.split(',', QString::SkipEmptyParts);
-
-        double temp = 0;
-
-        cout << qdataList.length() << endl;
-        cout << target.toStdString() << endl;
+        vector<vector<float>> tg = target["target"];
 
         for(int i=0; i<4; i++)
         {
             for(int j=0; j<4; j++)
             {
-                cout << i*4+j << ":" << qdataList.at(i*4+j).toStdString() << endl;
-                TO_NUMBER(const_cast<QString&>(qdataList.at(i*4+j)).toStdString(), temp);
-                (*(this->target))(i, j) = temp;
+                (*(this->target))(i, j) = tg[i][j];
             }
         }
     }
 }
 
-//points:"1,2,3,4"->(1,2)(3,4)
-void FireDetectClient::loadPoints(QString& points)
+void SmartPicker::loadPoints(json& points)
 {
     if(!isSBFSet(PointsBufferFull))
     {
         setStatus(PointsBufferFull);
 
-        QStringList qdataList = points.split(',', QString::SkipEmptyParts);
+        vector<vector<double>> j_points = points["points"];
 
         double temp = 0;
 
-        TO_NUMBER(const_cast<QString&>(qdataList.at(0)).toStdString(), temp);
-        cleft.x = temp;
-        TO_NUMBER(const_cast<QString&>(qdataList.at(1)).toStdString(), temp);
-        cleft.y = temp;
-        TO_NUMBER(const_cast<QString&>(qdataList.at(2)).toStdString(), temp);
-        cright.x = temp;
-        TO_NUMBER(const_cast<QString&>(qdataList.at(3)).toStdString(), temp);
-        cright.y = temp;
+        cleft.x = j_points[0][0];
+        cleft.y = j_points[0][1];
+        cright.x = j_points[1][0];
+        cright.y = j_points[1][1];
 
         Point3d tri_xyz;
         tri_xyz = m_capture.triangulation(cleft, cright);
@@ -475,31 +458,24 @@ void FireDetectClient::loadPoints(QString& points)
     }
 }
 
-// setType:data1,data2
-void FireDetectClient::setting(QString& settingData)
+void SmartPicker::setting(json& settingData)
 {
     if(!isSBFSet(SettingDataBufferFull))
     {
         setStatus(SettingDataBufferFull);
 
-        QStringList qdataList = settingData.split(':', QString::SkipEmptyParts);
-        QString setType = qdataList.at(0);
+        string std_setType = settingData["setType"];
+        QString setType = QString::fromStdString(std_setType);
 
         if(setType.startsWith("algorithmType"))
         {
-            double temp = 0;
-            TO_NUMBER(const_cast<QString&>(qdataList.at(1)).toStdString(), temp);
-            cout << "temp:" << temp << endl;
-            this->algorithmType = temp;
+            this->algorithmType = settingData["setData"];
 
             deviceBusy("Setting:SUCCESS:algorithmType");
         }
         else if(setType.startsWith("mode"))
         {
-            double temp = 0;
-            TO_NUMBER(const_cast<QString&>(qdataList.at(1)).toStdString(), temp);
-
-            this->mode = temp;
+            this->mode = settingData["setData"];
 
             deviceBusy("Setting:SUCCESS:mode");
         }
@@ -512,12 +488,12 @@ void FireDetectClient::setting(QString& settingData)
     }
 }
 
-void FireDetectClient::deviceBusy(QString msg)
+void SmartPicker::deviceBusy(QString msg)
 {
     m_mqttClient->Publish_data(m_mqttClient->topic("busy"), msg);
 }
 
-void FireDetectClient::send_img()
+void SmartPicker::send_img()
 {
     Mat srcL, srcR;
     m_capture.getCorrectedImg(srcL, srcR);
@@ -544,7 +520,7 @@ void FireDetectClient::send_img()
 
 }
 
-FireDetectClient::~FireDetectClient()
+SmartPicker::~SmartPicker()
 {
     delete eventLoopTimer;
     delete GA_PSO;

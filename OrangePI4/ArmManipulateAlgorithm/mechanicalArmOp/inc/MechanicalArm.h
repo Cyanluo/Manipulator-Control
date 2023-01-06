@@ -1,8 +1,8 @@
 #ifndef MECHANICALARM_H_
 #define MECHANICALARM_H_
 
-#include"../eigen-3.3.9/Eigen/Dense"
-#include"./TransferMatrix.h"
+#include "Dense"
+#include "TransferMatrix.h"
 
 using namespace Eigen;
 

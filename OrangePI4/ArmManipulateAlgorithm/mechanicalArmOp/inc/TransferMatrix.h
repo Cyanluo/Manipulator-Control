@@ -1,7 +1,7 @@
 #ifndef TRANSFERMATRIX_H_
 #define TRANSFERMATRIX_H_
 
-#include"../eigen-3.3.9/Eigen/Dense"
+#include "Dense"
 
 using namespace Eigen;
 

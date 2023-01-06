@@ -4,6 +4,7 @@ from CONST import ARM_STATUS, MODE
 from PyQt5.QtCore import QCoreApplication, QObject
 from PyQt5.QtWidgets import QApplication, QWidget
 import sys
+import json
 
 import gi
 from gi import require_version
@@ -28,27 +29,37 @@ class ServerMonitor(QObject):
     def exeCMD(self, cmdID):
         self.pcClient.publish_data("/pc/command/1", str(int(cmdID)))
 
-    def sendData(self, datypeID, data):
-        self.pcClient.publish_data("/pc/dataChannel1/1", str(int(datypeID))+";"+data)
+    def sendData(self, data):
+        self.pcClient.publish_data("/pc/dataChannel1/1", json.dumps(data))
 
     def setting(self, setType, data):
-        if setType == "mode":
-            self.pcClient.setMode(data)
-            self.sendData(ARM_STATUS.SettingData, setType + ":" + str(int(data)))
-        else:
-            self.sendData(ARM_STATUS.SettingData, setType+":"+data)
+        settingData = {
+            "id": ARM_STATUS.SettingData,
+            "setType": setType,
+            "setData": data
+        }
+        self.sendData(settingData)
 
     def reachDist(self, xyz):
-        target = "0,0.98,0.19," + str(-xyz[2] + 55) + ",1,0,1, " + str(xyz[1]+5) + " ,0,0.19,-0.98," + str(
-            -xyz[0] + 240) + ",0,0,0,1"
+        target = {
+            "id": ARM_STATUS.ReceiveTarget,
+            "target":[[0, 0.98, 0.19, -xyz[2]+55],
+                      [1,    0,    1, xyz[1]+5],
+                      [0, 0.19,-0.98, -xyz[0]+240],
+                      [0,    0,    0,    1]]
+        }
         print("XYZ:", (-xyz[2] + 45, xyz[1], -xyz[0] + 225))
         print("-----------")
-        self.sendData(ARM_STATUS.ReceiveTarget, target)
+        self.sendData(target)
         self.exeCMD(ARM_STATUS.ReachTarget)
 
     def sendPoints(self):
-        pointData = str(self.cleft[0]) + "," + str(self.cleft[1]) + "," + str(self.cright[0]) + "," + str(self.cright[1])
-        self.sendData(ARM_STATUS.ReceivePoints, pointData)
+        pointData = {
+            "id": ARM_STATUS.ReceivePoints,
+            "points": [list(self.cleft), list(self.cright)]
+        }
+        #pointData = str(self.cleft[0]) + "," + str(self.cleft[1]) + "," + str(self.cright[0]) + "," + str(self.cright[1])
+        self.sendData(pointData)
 
     def selectObject(self, event, x, y, flags, param):
         if event == cv.EVENT_LBUTTONDOWN:
@@ -86,12 +97,16 @@ class ServerMonitor(QObject):
 
                 if self.triF:
                     self.triF = False
-                    self.setting("algorithmType", str(0))
+                    self.setting("algorithmType", 0)
                     self.sendPoints()
 
                 if self.reset:
                     self.reset = False
-                    self.sendData(ARM_STATUS.ReceiveRunParams, "0,0,0,0,0,0")
+                    runParams = {
+                        "id": ARM_STATUS.ReceiveRunParams,
+                        "runParams": [0, 0, 0, 0, 0, 0]
+                    }
+                    self.sendData(runParams)
                     self.exeCMD(ARM_STATUS.ActionExecute)
             else:
                 cv.waitKey(500)

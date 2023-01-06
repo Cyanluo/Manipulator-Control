@@ -8,6 +8,9 @@
 #include "../Pointer/SmartPointer.h"
 #include "../binocularCamera/binocularCamera.h"
 
+#include "nlohmann/json.hpp"
+#include <vector>
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -21,11 +24,12 @@
 using namespace cv;
 using namespace FD;
 using namespace GeneticAlgorithm;
+using json = nlohmann::json;
 
 #define TO_NUMBER(s, n) ( istringstream(s) >> n )
 #define R_TO_ANGEL(r) ()
 
-class FireDetectClient : public QObject
+class SmartPicker : public QObject
 {
     Q_OBJECT
 
@@ -77,11 +81,11 @@ class FireDetectClient : public QObject
     void actionExecute();
     void reachTarget();
 
-    void loadRunParams(QString& runParams);
+    void loadRunParams(json& runParams);
     void deviceBusy(QString msg);
-    void loadTarget(QString& target);
-    void loadPoints(QString& points);
-    void setting(QString& settingData);
+    void loadTarget(json& target);
+    void loadPoints(json& points);
+    void setting(json& settingData);
 
     void eventLoop(int eventid = -1);
     void run(int eventid);
@@ -97,14 +101,14 @@ class FireDetectClient : public QObject
     void runGAPSO(TransferMatrix* ltarget, int type=0); // 0:ga-pso 1:ga 2:pso
     void runArm();
 public:
-    FireDetectClient(QObject *parent = 0);
+    SmartPicker(QObject *parent = 0);
 
 //slots
     void mqttCommendDispose(QMQTT::Message message);
     void mqttDataDispose(QMQTT::Message message);
 
     void send_img();
-    ~FireDetectClient();
+    ~SmartPicker();
 };
 
 #endif // WIDGET_H

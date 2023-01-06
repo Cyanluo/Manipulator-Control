@@ -1,7 +1,7 @@
 #ifndef DHMECHANICALARM_H_
 #define DHMECHANICALARM_H_
 
-#include "./MechanicalArm.h"
+#include "MechanicalArm.h"
 #include <math.h>
 #include <iostream>
 
